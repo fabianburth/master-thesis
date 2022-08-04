@@ -28,6 +28,7 @@
 *.toc
 *.bcf
 *.run.xml
+*-blx.bib
 
 # ========== OSX ===============
 .DS_Store

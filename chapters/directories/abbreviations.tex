@@ -6,13 +6,13 @@
 \npchapter*{Acronyms}
 
 \addcontentsline{toc}{chapter}{Abbreviations}
-\begin{filecontents}{abbreviations.tex}
+\begin{filecontents}{miscellaneous/abbreviations.tex}
 
 \end{filecontents}
 
-%\begin{acronym}
-%	\IfFileExists{Abkuerzungen-sortiert}{\input{Abkuerzungen-sortiert}}{\input{Abkuerzungen}}
-%\end{acronym}
+\begin{acronym}
+	\IfFileExists{miscellaneous/abbreviations-sorted}{\input{miscellaneous/abbreviations-sorted}}{\input{miscellaneous/abbreviations}}
+\end{acronym}
 
 %cmd-Command zum Sortieren
 %sort Abkuerzungen.tex /O Abkuerzungen-sortiert.tex
