@@ -5,10 +5,60 @@
 
 \npchapter{Foundations}
 \section{Terminology}
-This section explains several abbreviations and standards which are commonly mentioned alongside the topics \textit{Software Bill of Materials}, \textit{Vulnerability Management} and \textit{Open Source Licensing} and are thus essential for the further understanding.\\
+This section explains several abbreviations and standards which are frequently mentioned alongside the topics \textit{Software Bill of Materials}, \textit{Vulnerability Management} and \textit{Open Source Licensing} and are thus essential for the further understanding.\\
+
+\subsection{Software Identification}
+Being able to uniquely identify a piece of software is an essential capability when managing applications on enterprise scale. Thus, a standardized naming convention is required. Unfortunately, there is not just one such convention, but multiple. The most prominent and widely accepted will be introduced in this section.\\
 
 \noindent
-\textbf{Common Platform Enumeration (CPE)}: The CPE specification originally created by MITRE and now maintained by NIST provides a naming scheme for IT assets such as software. It may be used to uniquely determine a specific software and its version. This way a CPE enables cross referencing to other sources of information. The commonly used CPE naming scheme is structured as follows:\\
+\textbf{purl}\\
+\noindent
+Different package manager like npm or rpm use different naming schemes to identify and locate a software package. Thus, it is difficult to uniformly reference the same software package across tools. 
+
+\subsection{Vulnerability Management}
+\noindent
+\textbf{Vulnerability}\\
+\noindent
+According to the National Institute of Standards and Technology (NIST) a vulnerability is \enquote{A weakness in the computational logic (e.g., code) found in software and hardware components that, when exploited, results in a negative impact to confidentiality, integrity, or availability. Mitigation of the vulnerabilities in this context typically involves coding changes, but could also include specification changes or even specification deprecations (e.g., removal of affected protocols or functionality in their entirety).}\cite{NVDWebsite}\\
+
+\noindent
+\textbf{Common Vulnerabilities and Exposures (CVE)}\\
+\noindent 
+CVE was created by MITRE in 1999. Initially, the acronym was meant to stand for \textit{Common Vulnerability Enumeration}. As described by the authors of the original whitepaper, many security tools and advisories used their own vulnerability identifiers. In order to integrate several of these, one had to manually compare and eventually relate the vulnerabilities to each other. Thus, a common naming convention and common enumeration of vulnerabilities was needed \cite{CVEOriginal}.\par
+To solve this issue, the \textit{CVE Program} assigns unique identifiers, so called \textit{CVE IDs}, to each vulnerability. All the identified vulnerabilities are then maintained as \textit{CVE Records} in the \textit{CVE List}. A minimal \textit{CVE Record} consists of a \textit{CVE ID}, a description of the vulnerability and at least one public reference. It does not include technical data, information about risks, impacts or fixes. An example for such a CVE Record is shown in figure \ref{fig:CVE Record} below.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics{cverecord}
+	\caption[CVE Record]{CVE Record \source{\cite{CVEMITREWebsite}}}
+	\label{fig:CVE Record}
+\end{figure}
+
+In order to make sure that all vulnerabilities listed in the \textit{CVE List} are unique and maintained properly, \textit{CVE IDs} can only be assigned and \textit{CVE Records} can only be published by MITRE and several partner organizations, so called \textit{CVE Numbering Authorities (CNA)}. Thus, to add a new vulnerability to the \textit{CVE List}, the discoverer has to report it to a CNA \cite{CVEWebsite}.\\
+
+\noindent
+\textbf{Common Vulnerability Scoring System (CVSS)}\\
+\noindent
+CVSS is an open framework for rating vulnerabilities. It is owned and managed by the non-profit organization \textit{Forum of Incident Response and Security Teams (FIRST)}. The framework captures the main characteristics of a vulnerability to produce a numerical score between 0.0 and 10.0 reflecting its severity.\par
+Therefore CVSS is composed of three metric groups: Base, Temporal, and Environmental. The \textit{Base Score} considers the intrinsic characteristics of a vulnerability that are constant over time and assumes the worst case impact across different environments. These characteristics take into account exploitability metrics like attack complexity but also impact metrics like confidentiality impact. The \textit{Base Score} is typically calculated by the organization maintaining the vulnerable product or by third party analysts on their behalf. The \textit{Temporal Score} considers characteristics that may change over time but not across environments. Such a characteristic would be the maturity of exploit code. The \textit{Environmental Score} considers the relevance of a vulnerability in a specific environment. \textit{Temporal} and \textit{Environmental Scores} are typically calculated by the consumers of the components to adjust the vulnerability rating to their organizations use case and environment. These Scores can then be used for internal risk management \cite{CVSSSpec}.\\
+
+\noindent
+\textbf{Common Weakness Enumeration (CWE)}\\
+\noindent
+CWE is a community-developed list of software and hardware weaknesses maintained by MITRE. Each weakness in the least is assigned a\textit{ CWE ID}. The list represents weaknesses on different levels of abstraction. This is conceptually shown by figure \ref{fig:CWE Hierarchy}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.7]{cwehierarchy}
+	\caption[CWE Hierarchy]{CWE Hierarchy \source{Own Representation}}
+	\label{fig:CWE Hierarchy}
+\end{figure}
+
+\noindent
+So there exist relationships between elements on different levels of abstraction. As shown \textit{Classes} are usually member of a \textit{Category} and might also be the child, hence a more concrete description, of a \textit{Pillar}. Additionally to what is shown in the figure, these relationships may also skip levels of hierarchy. Thus, a \textit{Base Level Weakness} may be a direct member of a \textit{Category} or a child of a \textit{Pillar}. An example for a Base Level Weakness is\textit{CWE}-478\textit{: Missing Default Case in Switch Statement} which is a member of \textit{Bad Coding Practices} and a child of the class \textit{Incomplete Comparison with Missing Factors}, which is a child of the pillar \textit{Incorrect Comparison} \cite{CWEWebsite}.\\
+
+\noindent
+\textbf{Common Platform Enumeration (CPE):} The CPE specification originally created by MITRE and now maintained by NIST provides a naming scheme for IT assets such as software. It may be used to uniquely determine a specific software and its version. This way a CPE enables cross referencing to other sources of information. The commonly used CPE naming scheme is structured as follows:\\
 \noindent
 \begin{lstlisting}[caption=CPE Formatted String Binding, captionpos=b, label=lst:CPE]
 cpe:2.3: part : vendor : product : version : update : edition : language : sw_edition : target_sw : taget_hw : other
@@ -17,19 +67,40 @@ cpe:2.3: part : vendor : product : version : update : edition : language : sw_ed
 \noindent
 Thereby \lstinline|part| may be \textit{a} for applications, \textit{o} for operating systems, and \textit{h} for hardware devices. \lstinline|edition| is a legacy attribute in the current version of the specification and may be omitted where not required for backward compatibility. The attributes after \lstinline|edition| were newly introduced in this version and are referred to as \textit{extended attributes}. \lstinline|sw_edition| should characterize a particular market or class of users a product is tailored to (e.g. online), \lstinline|target_sw| a software computing environment (e.g. linux), \lstinline|target_hw| the instruction set architecture (e.g. x86), and \lstinline|language| the language supported in the user interface \cite{CPESpec}.\\
 
-Package Information:
-	Maven Coordinates (GAV - groupId:artifactId:version)
-	NPM Coordinates 
-	Package URLs
-CPE (Common Platform Enumeration):
-CVE (Common Vulnerabilities and Exposures):
-CNA (CVE Numbering Authorities):
-CWE (Common Weakness Enumeration):
-CVSS (Common Vulnerability Scoring System):
-NVD (U.S. National Vulnerability Database):
-CERT/CC Vulnerability Notes Database: 
-Vulnerability:
-Exposure:
+\noindent
+\textbf{National Vulnerability Database (NVD)}\\
+\noindent
+The NVD is a database of vulnerabilities owned and maintained by NIST. In the paragraph about CVE, it was mentioned that the \textit{CVE Records} do not contain technical data, information about risks and impact, or fixes. The NVD feeds from the \textit{CVE List} and uses the information provided in the \textit{CVE Records} to perform further analysis. As a result, a NVD entry exists for each \textit{CVE ID} and provides a \textit{CVSS Base Score}, a \textit{CWE ID} and a \textit{CPE ID} \cite{NVDWebsite}.\par 
+Thus, NVD combines all the aforementioned standards and concepts to provide thorough and concise human and machine-readable information about vulnerabilities. \textit{CPE IDs} identifying a particular software version in use may be queried against a NVD API to automatically check for known vulnerabilities. The \textit{CVSS Base Score} is a valuable foundation for internal risk assessment and the \textit{CWE ID} helps to quickly understand the type of a vulnerability.\\
+
+\subsection{Open Source Software and Licensing}
+\textit{Open Source Software} is widely used in modern software development. As to what Open Source Software actually is, the \textit{Open Source Initiative} defined a set of rules, the \textit{Open Source Definition} specifying distribution terms that the license of a software must comply with. Without going into detail and examining all of these terms, this definition generally ensures that such software "can be freely accessed, used, changed, and shared (in modified or unmodified form) by anyone" \cite{OSI}.\par
+This description on its own may give the impression that there is no need to keep track of what \textit{OSS Licenses} are used within an enterprise application. But there are still some limitation that \textit{OSS Licenses} can put to the usage, especially the distribution of the software. Specifically, the so called \textit{copyleft} principle and corresponding licenses might pose a challenge to some companies. While OSS generally may be used for commercial purposes, this principle dictates that if a company or individual distributes the software or a derivative, it has to be done under the same license it has been received under \cite{OSI}.\\
+
+In the context of this work, OSS will be used within other OSS components, so \textit{copyleft} is not an issue. But anyway, there is still a risk involved in using OSS. A company might distribute initial software versions under an OSS License until there is some kind of customer lock-in and then switch to a commercial license for further versions. Also, since there might not exists precedent cases regarding the legal interpretation of some specific OSS licenses, there is a risk of expensive law suits.
+
+
+
+\subsection{Regulations}
+Vulnerabilities and licenses are not the only risks associated with enterprise software. Companies also need to consider governmental regulations since violations may lead to fines that have critical impact on the business.\\
+
+\noindent
+\textbf{Export Control Classification Number (ECCN)}\\
+\noindent
+The ECCN is a 5 character alpha-numeric designation used to determine whether an so called dual-use item needs an export license from the U.S. Department of Commerce in order to legally export it. Dual-use items are items that may be used for civil as well as military purposes. The ECCN gives some information about the product, as shown in figure \ref{fig:ECCN Structure} below.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.6]{eccn}
+	\caption[ECCN Structure]{ECCN Structure \source{\cite{ECCN}}}
+	\label{fig:ECCN Structure}
+\end{figure}
+
+All ECCNs are listed in the \textit{Commerce Control List (CCL)}. The entries in the list contain information about why an item might be under export control regulations. In the top of figure \ref{fig:ECCN Structure} is a snippet of such an entry. The reason for the export regulations of products with the classification number 4E993 is AT, which is the abbreviation for Anti-Terrorism \cite{ECCN}.\par
+
+
+
+\todo{A lot of these standards could be explained in much more detail (at the moment, they are kept just as long as currently deemed necessary to understand the further topics).}
 
 \section{Software Bill of Materials}
 A \textit{Software Bill of Materials} is an inventory of the components used in a software. It ideally contains all direct and transitive components and their dependencies, so it is in other words pretty much the dependency graph of a software \cite{OWASPWebsite,NTIASBOM}.\\
@@ -123,7 +194,7 @@ Relationship: SPDXRef-Makefile BUILD_TOOL_OF SPDXRef-Package-hello
 
 \noindent
 Most of the tag:value pairs are self-explanatory, but some might require some explanation. The \textit{Concluded License} is the license the SPDX file creator has concluded as the governing license of a package or a file. \textit{License Information from Files} contains a list of all licenses found in a package and the \textit{Declared License} is the license declared by the authors of the package \cite{SPDXSpec}. Additionally, listing \ref{lst:SPDX Document} illustrates how the concept of relationships may be used.\par
-It also worth mentioning that the concept of \textit{Packages} in SPDX as a set of associated files is really rather loose. Thus, describing the project in figure \ref{fig:C Project} as two separate packages, one for source and one for binary, optionally in the same or also in two separate \textit{SPDX Documents} would be completely conform with the specification as well.\par
+It is also worth mentioning that the concept of \textit{Packages} in SPDX as a set of associated files is really rather loose. Thus, describing the project in figure \ref{fig:C Project} as two separate packages, one for source and one for binary, optionally in the same or also in two separate \textit{SPDX Documents} would be completely conform with the specification as well.\par
 Since SPDX has been around for so long and is an accepted ISO standard, there exists a lot of useful tooling. It is therefore quite easy to automate tasks like producing, consuming, transforming and validating \textit{SPDX Documents} \cite{SPDXWebsite}.\\
 
 \noindent
@@ -146,8 +217,6 @@ While SPDX is a really good standard to describe licensing and copyright informa
 
 \todo{Add a section about supply chain attacks to stress the necessity of SBOMS?}
 
-\section{Vulnerabilities}
-\section{OSS Licensing}
 \section{Context at SAP Gardener}
 Builds, Repositories, Gardener Servicelet Pattern (Session mit Uwe)
 \subsection{SAP Gardener}

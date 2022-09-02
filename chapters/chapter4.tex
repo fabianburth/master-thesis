@@ -4,8 +4,32 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%	
 
 \npchapter{System Design}
+This section describes the design of the \textit{Security and Compliance Data Lake}. It covers the conception of the data model, the selection of a database and the design of the the API. Thereby, it especially focuses on giving detailed information about the ideas and motives that lead to specific design decisions.
+
+\section{Requirements}
+Before actually going into the details of the systems design, the requirements have to be specified, since they are at the core of pretty much every design decision. 
+
+\subsection{Functional Requirements}
+\begin{table}[H]
+	\begin{tabularx}{\linewidth}{|l|X|l|l|}
+		\hline
+		\rowcolor{lightgray}\multicolumn{4}{|l|}{\cellcolor{lightgray}{\textbf{A1: API}}} \\
+		\hline
+		\rowcolor{lightgray}
+		\textbf{Ref.\#} & \textbf{Functionality} & \textbf{Category} & \textbf{Priority} \\
+		\hline
+	\end{tabularx}
+	\caption[API Requirements]{API Requirements}
+	\label{Tab:API Requirements}
+\end{table}
+The SCDL must be able to consume data from multiple different data sources over the internet.
+The SCDL must be able to provide a SBOM of the components to the user.
+
+
+
 
 \section{Data Model}
+
 \section{Database}
 \section{API}
 Tool agnostic, how does the api look like to abstract away from different tools
