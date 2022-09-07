@@ -77,7 +77,6 @@ CWE is a community-developed list of software and hardware weaknesses maintained
 	\label{fig:CWE Hierarchy}
 \end{figure}
 
-\noindent
 So there exist relationships between elements on different levels of abstraction. As shown \textit{Classes} are usually member of a \textit{Category} and might also be the child, hence a more concrete description, of a \textit{Pillar}. Additionally to what is shown in the figure, these relationships may also skip levels of hierarchy. Thus, a \textit{Base Level Weakness} may be a direct member of a \textit{Category} or a child of a \textit{Pillar}. An example for a Base Level Weakness is\textit{CWE}-478\textit{: Missing Default Case in Switch Statement} which is a member of \textit{Bad Coding Practices} and a child of the class \textit{Incomplete Comparison with Missing Factors}, which is a child of the pillar \textit{Incorrect Comparison} \cite{CWEWebsite}.\\
 
 \noindent
@@ -95,7 +94,7 @@ Thereby \lstinline|part| may be \textit{a} for applications, \textit{o} for oper
 The NVD is a database of vulnerabilities owned and maintained by NIST. In the paragraph about CVE, it was mentioned that the \textit{CVE Records} do not contain technical data, information about risks and impact, or fixes. The NVD feeds from the \textit{CVE List} and uses the information provided in the \textit{CVE Records} to perform further analysis. As a result, a NVD entry exists for each \textit{CVE ID} and provides a \textit{CVSS Base Score}, a \textit{CWE ID} and a \textit{CPE ID} \cite{NVDWebsite}.\par 
 Thus, NVD combines all the aforementioned standards and concepts to provide thorough and concise human and machine-readable information about vulnerabilities. \textit{CPE IDs} identifying a particular software version in use may be queried against a NVD API to automatically check for known vulnerabilities. The \textit{CVSS Base Score} is a valuable foundation for internal risk assessment and the \textit{CWE ID} helps to quickly understand the type of a vulnerability.\\
 
-\subsection{Software Bill of Materials}
+\subsection{Software Bill of Materials} \label{sec:SBOM}
 A \textit{Software Bill of Materials} is an inventory of the components used in a software. It ideally contains all direct and transitive components and their dependencies, so it is in other words pretty much the dependency graph of a software \cite{OWASPWebsite,NTIASBOM}.\\
 
 As consequence to an \textit{Executive Order on Improving the Nation's Cybersecurity}, the \textit{National Telecommunications and Information Administration (NTIA)} published a document describing the minimum requirements for SBOMs \cite{ExecutiveOrderSBOM,NTIASBOM}). According to this document, these are:
@@ -116,18 +115,17 @@ As consequence to an \textit{Executive Order on Improving the Nation's Cybersecu
 
 The goal of the \textit{Data fields} is to sufficiently identify the components to track them through the supply chain and map them to other data sources, such as vulnerability and license databases. The \textit{Automation Support} provides the ability to scale across the software ecosystem. The \textit{Practices and Processes} ensure the maintenance by integration into the ALM. SBOMs thereby increase software transparency, providing those who produce, purchase and operate software the means to perform proper risk assessments \cite{NTIASBOM}.\par
 Due to this Executive Order, SBOMs are now required for all U.S. federal software procurements. This does not only affect direct software vendors of the U.S. government \cite{ExecutiveOrderSBOM}. As a consequence to this Executive Order, every organization that is downstream from the U.S. government in the supply chain may be required to provide SBOMs for its products. Thus, this will be a crucial capability for most software vendors.\par
-There are three data formats mentioned in the minimum elements document which are interoperable, able to fulfill the requirements and either human- and machine-readable. Those are the \textit{Software Package Data eXchange (SPDX)}, \textit{CycloneDX} and \textit{Software Identification (SWID)} tags \cite{NTIASBOM}. SPDX is the most mature standard. It has laid out a lot of groundwork for the more recent CycloneDX. Thus, to get an better and more concrete understanding of SBOMs, SPDX will be examined in more detail.\\
+There are three data formats mentioned in the minimum elements document which are interoperable, able to fulfill the requirements and either human- and machine-readable. Those are the \textit{Software Package Data eXchange (SPDX)}, \textit{CycloneDX} and \textit{Software Identification (SWID)} tags \cite{NTIASBOM}. SAP uses yet another SBOM format, called Open Component Model (OCM), which does not fulfill the minimum requirements. The OCM will be discussed further in one of the following sections. SPDX is the most mature standard. It has laid out a lot of groundwork for the more recent CycloneDX. Thus, to get an better and more concrete understanding of SBOMs, SPDX will be examined in more detail.\\
 
 \noindent   
 \textbf{SPDX License List and License Identifiers}\\
 SPDX is an initiative founded in 2010 and hosted at \textit{The Linux Foundation}. In 2021 the SPDX specification even became an ISO standard \cite{SPDXISO}. The initiative focuses on solving challenges regarding the licenses and copyrights associated with software packages. SPDX therefore assembles licenses and exceptions commonly found in OSS in the \textit{SPDX License List}. More precisely, this list includes a standardized short identifier, the full name, the license text, and a canonical permanent URL for each license and exception. By incorporating this \textit{SPDX License Identifiers} in source on file level, one enables automation of concise license detection, even if just parts of an OSS project are used. Furthermore, SPDX provides \textit{Matching Guidelines} to ensure that e.g. a \enquote{BSD 3-clause} license in a LICENSE file of an OSS project with different capitalization or usage of white space than the master license text included in the \textit{SPDX License List} is still identified as \enquote{BSD 3-clause} license.\\
 
 \noindent
-\textbf{SPDX Documents}
+\textbf{SPDX Documents}\\
 At the heart of the SPDX initiative are the \textit{SPDX Documents} which leverage the \textit{SPDX License List} and \textit{SPDX License Identifiers} to describe the licensing of a set of associated files, referred to as \textit{Package} in the context of SPDX. A \textit{SPDX Document} provides means to describe information about the document creation, the package as a whole, individual files, snippets of code within an individual file and other licenses that are not contained in the \textit{SPDX License List} but are still relevant for the package, relationships between \textit{SPDX Documents}, and annotations, which in a way are comments within an \textit{SPDX Document}. The concept of relationships is a rather new addition to the specification. It is particularly useful if one has an SPDX Document describing a binary. Explicitly capturing relationships like \enquote{generated from} these source files and \enquote{dynamically linking} these libraries allows for a complete licensing picture. \par
 These documents may be represented in one of the following five file format: tag/value (.spdx), JSON (.spdx.json), YAML (.spdx.yaml), RDF/xml (.spdx.rdf), and spreadsheets (.xls) \cite{SPDXWebsite, SPDXSpec}.\\
 
-\noindent
 To give a more concrete idea of the basic concepts of \textit{SPDX Documents}, an example from the SPDX GitHub repository will be briefly examined \cite{SPDXExamples}. Therefore figure \ref{fig:C Project} below shows the directory structure of a \enquote{Hello World} project in C.
 
 \begin{figure}[H]
@@ -137,7 +135,6 @@ To give a more concrete idea of the basic concepts of \textit{SPDX Documents}, a
 	\label{fig:C Project}
 \end{figure}
 
-\noindent
 Listing \ref{lst:SPDX Document} shows a corresponding \textit{SPDX Document}. Some tag:value pairs which are less relevant for the overall understanding are deliberately omitted to contain the length of the example.\\ 
 
 \noindent
@@ -205,14 +202,15 @@ The ECCN is a 5 character alpha-numeric designation used to determine whether an
 	\label{fig:ECCN Structure}
 \end{figure}
 
-All ECCNs are listed in the \textit{Commerce Control List (CCL)}. The entries in the list contain information about why an item might be under export control regulations. In the top of figure \ref{fig:ECCN Structure} is a snippet of such an entry. The reason for the export regulations of products with the classification number 4E993 is AT, which is the abbreviation for Anti-Terrorism \cite{ECCN}.\par
-
-
-\todo{A lot of these standards could be explained in much more detail (at the moment, they are kept just as long as currently deemed necessary to understand the further topics).}
+All ECCNs are listed in the \textit{Commerce Control List (CCL)}. The entries in the list contain information about why an item might be under export control regulations. In the top of figure \ref{fig:ECCN Structure} is a snippet of such an entry. The reason for the export regulations of products with the classification number 4E993 is AT, which is the abbreviation for Anti-Terrorism \cite{ECCN}.
 
 \section{Context at SAP Gardener}
-Builds, Repositories, Gardener Servicelet Pattern (Session mit Uwe)
+Now, after the foundations have been laid out and there is a general understanding of both the goal of the thesis and the department, this section shall put those pieces together. Therefore, it will explain the Open Component Model (OCM) and why SAP Gardener even invented it instead of just using any other SBOM standard. Furthermore, it will elaborate how the Security and Compliance Data Lake may support SAP Gardener and increase the quality of the application lifecycle management.
+
 \subsection{SAP Gardener}
-\subsection{SAP Gardener Deployment Scenario}
+
+
 \subsection{Open Component Model}
+
+\subsection{SAP Gardener Deployment Scenario}
 \section{Integration into the Application Lifecycle}

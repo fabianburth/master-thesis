@@ -10,20 +10,45 @@ This section describes the design of the \textit{Security and Compliance Data La
 Before actually going into the details of the systems design, the requirements have to be specified, since they are at the core of pretty much every design decision. 
 
 \subsection{Functional Requirements}
-\begin{table}[H]
-	\begin{tabularx}{\linewidth}{|l|X|l|l|}
-		\hline
-		\rowcolor{lightgray}\multicolumn{4}{|l|}{\cellcolor{lightgray}{\textbf{A1: API}}} \\
-		\hline
-		\rowcolor{lightgray}
-		\textbf{Ref.\#} & \textbf{Functionality} & \textbf{Category} & \textbf{Priority} \\
-		\hline
-	\end{tabularx}
-	\caption[API Requirements]{API Requirements}
-	\label{Tab:API Requirements}
-\end{table}
-The SCDL must be able to consume data from multiple different data sources over the internet.
-The SCDL must be able to provide a SBOM of the components to the user.
+\begin{xltabular}{\linewidth}{|l|X|}
+	\hline \rowcolor{lightgray}\multicolumn{2}{|l|}{\cellcolor{lightgray}{\textbf{Requirements}}} \\ \hline \rowcolor{lightgray} \textbf{Ref.\#} & \textbf{Functionality} \\ \hline
+	\endfirsthead
+	
+	\hline \rowcolor{lightgray}\multicolumn{2}{|l|}{\cellcolor{lightgray}{\textbf{Requirements}}} \\ \hline \rowcolor{lightgray} \textbf{Ref.\#} & \textbf{Functionality} \\ \hline
+	\endhead
+	
+	\hline \multicolumn{2}{|r|}{{Continued on next page}} \\ \hline
+	\endfoot
+	
+	\hline \caption{Requirements} \label{Tab:Requirements}
+	\endlastfoot
+	
+	R.1 & The SCDL shall be able to consume and store data from multiple different data sources.\newline\newline
+	The SCDL shall be able to work with any kind of metadata about software components. Therefore, it has to be able to handle multiple different scanning tools, as well as other kinds of data sources like build tools. Thus, one has to consider that besides vulnerabilities and licenses, a variety of other data types may need to be added in the future. \\
+	\hline
+	R.2 & The SCDL shall store the data from different data sources without aggregation.\newline\newline
+	Different tools that generally serve the same purpose may provide similar information. To ensure that no data is lost, this information shall not be combined and aggregated for storing.\\
+	\hline
+	R.3 & The SCDL shall be able to store transitive relationships of packages.\newline\newline
+	A package is usually composed of other packages. The SCDL shall be able to store this recursive relationship.\\
+	\hline
+	R.4 & The SCDL shall enable users to attach additional occurrence specific information.\newline\newline
+	An artifact may occur in several components, a vulnerability may occur in several artifacts and so on. Thereby a vulnerability may be relevant in one artifact and irrelevant in another. In order to being able to perform such triaging tasks, the user has to be able to attach additional information.\\
+	\hline
+	R.5 & The SCDL shall enable users to identify two packages as the same.\newline\newline
+	Different tools might use different identifiers for packages. Since it therefore wont always be possible to automatically identify same packages found by different tools as the same package, the SCDL shall provide a way to do this manually.\\
+	\hline
+	R.6 & The SCDL shall enable users to query aggregated metadata of a component.\newline\newline
+	As mentioned before, to ensure no data is lost, the data from different data sources shall be stored without aggregation. Anyway, to be consumed by a user, this data shall be aggregated. Thus, some kind of aggregation layer is needed.\\
+	\hline
+	R.7 & The SCDL shall enable users to query the aggregated metadata on different levels of aggregation.\newline\newline
+	The user shall be able to query a component and all its metadata as well as a package and all its metadata. Furthermore, information about vulnerabilities and licenses shall bubble up when querying. So when querying a components, the SCDL shall aggregate the vulnerabilities and licenses contained throughout its packages. 
+	\\
+	\hline
+	R.8 & The SCDL shall provide means to request the SBOM.\newline\newline
+	In order to be able to fulfill governmental requirements like the executive order mentioned in \ref{sec:SBOM} about the Software Bill of Materials, the SCDL has to provide a way to request an SBOM.\\
+	\hline
+\end{xltabular}
 
 
 
