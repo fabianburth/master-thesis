@@ -1,60 +1,34 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Master's Thesis          %	    										
-% Fabian Burth, 2022-08-01 %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
+\npchapter{Context at SAP Gardener}
+As mentioned in the introduction, this work is written in cooperation with SAP. In fact, the limitations mentioned in the previous chapter are deducted from the limitations the SAP Gardener team struggles with themselves. Subsequently, this chapter introduces the \textit{Open Component Model (OCM)}, SAP Gardeners proposed standard to decouple the compliance scans from the CI/CD pipeline. Based on this knowledge, an overview of the development and deployment landscape of SAP Gardener is given. Finally, the suggested integration of the Security and Compliance Data Lake, as a central application for storing and querying software metadata, with the existing standard and landscape is presented. Thereby, this chapter provides a reference architecture on how to overcome the major limitations of the current state of the art approach. 
 
-\npchapter{System Design}
-This section describes the design of the \textit{Security and Compliance Data Lake}. It covers the conception of the data model, the selection of a database and the design of the the API. Thereby, it especially focuses on giving detailed information about the ideas and motives that lead to specific design decisions.
+\section{Open Component Model}
+The OCM is an SBOM format created and used by SAP Gardener. It does not fulfill the minimum requirements as defined by the NTIA. But this is due to the fact that the OCM has a different focus than SPDX or CycloneDX. While those two were deliberately designed to be a bill of materials, thoroughly listing the inventory of a software, the OCM was specifically developed to decouple CI from CD and thereby overcome related limitations such as the ones mentioned in the previous chapter. Following is a technical explanation of the Open Component Model deducted from the specification \cite{OCMSpec} and an internal presentation \cite{OCMInternalPresentation}. Even though this explanations focuses on understanding the rationale behind the design decisions of the proposed standard rather than technical completeness, it may still be a little hard to grasp at times. This is due to the abstract nature of the OCM. Therefore, emphasis and examples are used where possible. Also while the textual description really explains the OCM as the abstract model that it is, figure ?? below shows an actual \emph{Component Descriptor}, the serialization format of the OCM. This may also support in understanding the following paragraphs.\\\\
 
-\section{Requirements}
-Before actually going into the details of the systems design, the requirements have to be specified, since they are at the core of pretty much every design decision. 
 
-\subsection{Functional Requirements}
-\begin{xltabular}{\linewidth}{|l|X|}
-	\hline \rowcolor{lightgray}\multicolumn{2}{|l|}{\cellcolor{lightgray}{\textbf{Requirements}}} \\ \hline \rowcolor{lightgray} \textbf{Ref.\#} & \textbf{Functionality} \\ \hline
-	\endfirsthead
-	
-	\hline \rowcolor{lightgray}\multicolumn{2}{|l|}{\cellcolor{lightgray}{\textbf{Requirements}}} \\ \hline \rowcolor{lightgray} \textbf{Ref.\#} & \textbf{Functionality} \\ \hline
-	\endhead
-	
-	\hline \multicolumn{2}{|r|}{{Continued on next page}} \\ \hline
-	\endfoot
-	
-	\hline \caption{Requirements} \label{Tab:Requirements}
-	\endlastfoot
-	
-	R.1 & The SCDL shall be able to consume and store data from multiple different data sources.\newline\newline
-	The SCDL shall be able to work with any kind of metadata about software components. Therefore, it has to be able to handle multiple different scanning tools, as well as other kinds of data sources like build tools. Thus, one has to consider that besides vulnerabilities and licenses, a variety of other data types may need to be added in the future. \\
-	\hline
-	R.2 & The SCDL shall store the data from different data sources without aggregation.\newline\newline
-	Different tools that generally serve the same purpose may provide similar information. To ensure that no data is lost, this information shall not be combined and aggregated for storing.\\
-	\hline
-	R.3 & The SCDL shall be able to store transitive relationships of packages.\newline\newline
-	A package is usually composed of other packages. The SCDL shall be able to store this recursive relationship.\\
-	\hline
-	R.4 & The SCDL shall enable users to attach additional occurrence specific information.\newline\newline
-	An artifact may occur in several components, a vulnerability may occur in several artifacts and so on. Thereby a vulnerability may be relevant in one artifact and irrelevant in another. In order to being able to perform such triaging tasks, the user has to be able to attach additional information.\\
-	\hline
-	R.5 & The SCDL shall enable users to identify two packages as the same.\newline\newline
-	Different tools might use different identifiers for packages. Since it therefore wont always be possible to automatically identify same packages found by different tools as the same package, the SCDL shall provide a way to do this manually.\\
-	\hline
-	R.6 & The SCDL shall enable users to query aggregated metadata of a component.\newline\newline
-	As mentioned before, to ensure no data is lost, the data from different data sources shall be stored without aggregation. Anyway, to be consumed by a user, this data shall be aggregated. Thus, some kind of aggregation layer is needed.\\
-	\hline
-	R.7 & The SCDL shall enable users to query the aggregated metadata on different levels of aggregation.\newline\newline
-	The user shall be able to query a component and all its metadata as well as a package and all its metadata. Furthermore, information about vulnerabilities and licenses shall bubble up when querying. So when querying a components, the SCDL shall aggregate the vulnerabilities and licenses contained throughout its packages. 
-	\\
-	\hline
-	R.8 & The SCDL shall provide means to request the SBOM.\newline\newline
-	In order to be able to fulfill governmental requirements like the executive order mentioned in \ref{sec:SBOM} about the Software Bill of Materials, the SCDL has to provide a way to request an SBOM.\\
-	\hline
-\end{xltabular}
+\noindent In the context of the OCM, a \emph{Component} is a \emph{software intended for a purpose} which is \emph{identified by a globally unique name}. This definition is still pretty vague. But this is on purpose and it will become clear why throughout this section.\par 
+\noindent A \emph{Component Version} is identified by the \emph{globally unique name of the corresponding Component} and a \emph{version number}. Furthermore a \emph{Component Version} contains \emph{Component References}, \emph{Artifacts}, \emph{Labels} and a \emph{Provider}. \emph{Labels} is really just a container for additional metadata. It therefore is an array of objects with the properties \emph{name} and \emph{value}. The \emph{name} is a string while \emph{value} may be a string, array or map, arbitrarily nested. \emph{Provider} specifies the company or organization providing the \emph{Component Version}.\par 
+\noindent A \emph{Component Reference} is a reference to another \emph{Component Version}. This initially sounds simple but it actually has some pitfalls. A \emph{Component Reference} is not identified by the \emph{Identity} of another \emph{Component Version}, thus by the \emph{globally unique name} and the \emph{version number}. Additionally to the \emph{Identity of the Component Version}, the Identity of the \emph{Component Reference} also contains a \emph{name} for the reference. This is due to the fact that a \emph{Component Reference} does not have a strict predefined semantic. An example might help to understand this. Imagine one \emph{Component Version} describing a version of a web server and another \emph{Component Version} describing a version of an entire landscape of a REST application (as already mentioned, the definition of a \emph{Component} is very loose). Now the REST application \emph{Component Version} might use the web server \emph{Component Version} twice, as a classic HTTP server and as a HTTP load balancer. Therefore, one \emph{Component Reference} could have the \emph{name} "http server" and the other "load balancer". Due to this definition of \emph{Component Reference Identity}, the OCM provides the semantic capabilities to express such a situation. Additionally, \emph{Component References} also contain \emph{Labels}.\par 
+\noindent \emph{Artifact} is used as an umbrella term for either a \emph{Source} or a \emph{Resource}. \emph{Sources} are usually the input for the build process of \emph{Resources}, typically some source code. Subsequently, \emph{Resources} are usually built from \emph{Sources} and are capable of doing something. Thus, \emph{Resources} are typically executables or OCI Images. \emph{Artifacts}, so \emph{Sources} as well as \emph{Resources}, have common properties. They both have a component-local \emph{Identity} composed of required \emph{name} and \emph{version} properties and an optional \emph{extra identity}. The optional \emph{extra identity} property is necessary for similar reasons as the \emph{name} property in \emph{Component References}. There might be a situation where a \emph{Component Version} contains a specific \emph{Resource} such as an executable twice, one for ARM platforms and the other one for x86 based platforms. To enable even further distinctions, the \emph{extra identity} is a map of key-value-pairs. Component-local means, while the \emph{Identity} of \emph{Components} and respectively \emph{Component Versions} contains a \emph{globally unique name}, which makes the whole \emph{Identity} globally unique and therefore \emph{Component Versions} globally uniquely identifiable, the \emph{Identity} of \emph{Artifacts}, thus the combination of \emph{artifact name}, \emph{artifact version} and possibly \emph{artifact extra identity}, only has to be unique within the scope of a \emph{Component Version}. As a consequence, to globally uniquely address the abstract concept of an \emph{Artifact} in OCM, the combination of \emph{Component Version Identity} and \emph{Artifact Identity} is necessary. Thus, the globally unique \emph{component name} and the \emph{component version} plus the \emph{artifact name}, \emph{artifact version} and possibly the \emph{artifact extra identity}. Besides the identity properties, \emph{Artifacts} also have a \emph{type} and \emph{access} property and contain the well-known \emph{Labels}. As already mentioned, a \emph{Resource} may be an executable or an OCI Image. This can be expressed by the \emph{type}. In the case of \emph{Sources}, the \emph{type} usually refers to the kind of source code management system, e.g. git. Finally, the \emph{access} property, which is a map of key-value-pairs which again has a required \emph{type} property, provides a formal description of how and where to access the content. Thereby, the \emph{type} defines the access method, usually by specifying the repository type, e.g. github. The other key-values pairs in the map then depend on that type and may reference a particular commit by specifying the repository url and commit hash. A \emph{Resource} additionally has a \emph{digest}, \emph{relation} and \emph{srcRefs} property. The \emph{digest} is ann object defining a \emph{hash algorithm}, a \emph{normalization algorithm} and the \emph{hash} of the \emph{Resource}. The \emph{relation} property may have the value "local" or "external". The value "local" means that the \emph{Resource} is derived from \emph{Sources} contained in this \emph{Component Version}. These sources may then be referenced in the \emph{srcRefs} property. This is an array of objects with a map property \emph{IdentitySelector}, specifying the identity of the corresponding \emph{Resource} and the \emph{Labels} property.\par
+\noindent As mentioned and shown in the beginning of this section, to \emph{serialize} this abstract concept, OCM defines a format called \emph{Component Descriptor}. A \emph{Component Descriptor} thereby is the serialized form of a \emph{Component Version}. It may be expressed in YAML as well as JSON. Thus, this is \emph{machine readable} representation of a \emph{Component Version}. The explanation also sporadically mentioned some abstract data types, mainly to make the concepts more tangible. In cases the data type was omitted, one may assume it is a string. Nevertheless, some of these strings have to adhere to specific patterns. Such information was omitted on purpose to avoid clutter. To obtain this information and get a technically complete specification of the standard, refer to the official documentation \cite{OCMSpec}. 
+
+
+%...Thus, the OCM presents as a platform contract in a machine readable format which allows decoupling the deployment as well as the compliance scanning from the pipeline.
+
+
+
+\section{Development and Deployment Landscape at SAP Gardener}
+So SAP Gardener develops SAP`s own managed Kubernetes service which enables its to easily setup a kubernetes cluster in the cloud of one of the hyperscalers as well as on premise. Therefore, the team has to employ a rather sophisticated development and deployment landscape.\par
+An exemplary representation of the CI part of the development landscape is illustrated in ?? below.
 
 
 
 
-\section{Data Model}
+Now, after the foundations have been laid out and there is a general understanding of both the goal of the thesis and the department, this section puts those pieces together. It introduces the Open Component Model and explains how it fits into the SAP Gardener Deployment Scenario. Thereby, it also shows how the Open Component Model forms the basis for the Security and Compliance Data Lake.
 
-\section{Database}
-\section{API}
-Tool agnostic, how does the api look like to abstract away from different tools
+\section{Integration of the Security and Compliance Data Lake into the SAP Gardener Landscape}
+As already mentioned, the OCM is an SBOM format, created and used by SAP Gardener. The OCM does not fulfill the minimum requirements. This is because it is designed to fulfill different requirements. SPDX and CycloneDX are deliberately designed to be a bill of materials, thoroughly listing the inventory of a software. Meanwhile the purpose of OCM is to enable a holistic delivery automation in a multicloud environment \cite{OCMInternalPresentation}.\par
+To really understand the rationale behind OCM, it is crucial to look at where the idea historically comes from. In the ABAP on-premise environment, every development had to fulfill certain conditions so it 
+Now, the SAP Gardener managed kubernetes service is a cloud-native, open-source project. From early on, it consisted of about 60 \textit{Open Container Initiative (OCI) Images}. Thus, there immediately was a need for automation of both, delivery and compliance. As a consequence, SAP Gardener began to develop what is known as OCM today.
+
+SBOMs loose information without connection to the deployment
+

@@ -1,6 +1,72 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Master's Thesis          %	    										
 % Fabian Burth, 2022-08-01 %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
 
-\npchapter{Implementation}
+\npchapter{System Design}
+This section describes the design of the \textit{Security and Compliance Data Lake}. It covers the conception of the data model, the selection of a database and the design of the the API. Thereby, it especially focuses on giving detailed information about the ideas and motives that lead to specific design decisions.
+
+\section{Terminology}
+The System Design section makes use of a lot of heavily overloaded words which may lead to confusions and make it quite difficult to follow. To avoid this, the meaning(s) of those words in specific contexts will be specified in the following: \\
+
+\noindent
+\textbf{Component}\\
+
+\noindent
+\textbf{Artifact}\\
+
+\noindent
+\textbf{Package}
+ 
+
+\section{Requirements}
+Before actually going into the details of the systems design, the requirements have to be specified, since they are at the core of pretty much every design decision. 
+
+\subsection{Functional Requirements}
+\begin{xltabular}{\linewidth}{|l|X|}
+	\hline \rowcolor{lightgray}\multicolumn{2}{|l|}{\cellcolor{lightgray}{\textbf{Requirements}}} \\ \hline \rowcolor{lightgray} \textbf{Ref.\#} & \textbf{Functionality} \\ \hline
+	\endfirsthead
+	
+	\hline \rowcolor{lightgray}\multicolumn{2}{|l|}{\cellcolor{lightgray}{\textbf{Requirements}}} \\ \hline \rowcolor{lightgray} \textbf{Ref.\#} & \textbf{Functionality} \\ \hline
+	\endhead
+	
+	\hline \multicolumn{2}{|r|}{{Continued on next page}} \\ \hline
+	\endfoot
+	
+	\hline \caption{Requirements} \label{Tab:Requirements}
+	\endlastfoot
+	
+	R.1 & The SCDL shall be able to consume and store data from multiple different data sources.\newline\newline
+	The SCDL shall be able to work with any kind of metadata about software components. Therefore, it has to be able to handle multiple different scanning tools, as well as other kinds of data sources like build tools. Thus, one has to consider that besides vulnerabilities and licenses, a variety of other data types may need to be added in the future. \\
+	\hline
+	R.2 & The SCDL shall store the data from different data sources \textit{without aggregation}.\newline\newline
+	Different tools that generally serve the same purpose may provide similar information. To ensure that no data is lost, this information shall not be combined and aggregated for storing (\textit{aggregation} in this context means to e.g. combine the data about a package of a BDBA scan and a WhiteSource scan to an single package entity instance on database level).\\
+	\hline
+	R.3 & The SCDL shall enable users to perform assessments.\newline\newline
+	The relevance of specific pieces of information such as vulnerabilities depend on the use case. There the SCDL has to provide a possibility to assess such pieces of information in the context of its occurrence.\\
+	\hline
+	R.4 & The SCDL shall enable users to query aggregated metadata of a component.\newline\newline
+	As mentioned before, to ensure no data is lost, the data from different data sources shall be stored without aggregation (\textit{aggregation} in this context means to e.g. combine the data about a package of a BDBA scan and a WhiteSource scan to an single package entity instance on database level). Anyway, to be consumed by a user, this data shall be aggregated. Thus, some kind of aggregation layer is needed.\\
+	\hline
+	R.5 & The SCDL shall enable users to query the aggregated metadata on different levels of aggregation.\newline\newline
+	The user shall be able to query a component and all its metadata as well as a package and all its metadata. Furthermore, information about vulnerabilities and licenses shall bubble up when querying (so \textit{aggregation} in this context means to e.g. collect the vulnerabilities and licenses from packages contained in a component and perhaps also filter them based on the highest CVSS). 
+	\\
+	\hline
+	R.8 & The SCDL shall provide means to request the SBOM.\newline\newline
+	In order to be able to fulfill governmental requirements like the executive order mentioned in \ref{sec:SBOM} about the Software Bill of Materials, the SCDL has to provide a way to request an SBOM.\\
+	\hline
+	R.9 & Removal of old unused versions
+\end{xltabular}
+
+\subsection{Non-functional Requirements}
+Since this shall be a prototypical implementation, there is a strong focus on fulfilling the functional requirements. Anyway, performance definitely has to be considered in design decisions already, especially since the SCDL shall serve as the backend for a dashboard web application.
+Scalable (Wie viele Daten fallen im Gardener an? Wie lange wird das gut gehen? Datenarchivierung) --> PoC aufbauen und dann nachschauen! 
+
+~200MB/Day pro Scanner
+
+\section{Data Model}
+
+
+\section{Database}
+\section{API}
+Tool agnostic, how does the api look like to abstract away from different tools

@@ -3,12 +3,11 @@
 % Fabian Burth, 2022-08-01 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\npchapter{Foundations}
-\section{Terminology}
-This section explains several abbreviations and standards which are frequently mentioned alongside the topics \textit{Vulnerability Management} and \textit{Open Source Licensing} and are thus essential for the further understanding.\\
+\npchapter{Foundations} \label{Foundations}
+This chapter provides the basic knowledge necessary to understand the following chapters as well as other research and literature regarding metadata management. It therefore explains several important concepts and abbreviations around \textit{Software Identification}, \textit{Open Source}, \textit{Open Source Licensing} as and \textit{Vulnerability Management}. Furthermore \textit{Software Bill of Materials} and existing \textit{Software Bill of Material Standards} are introduced. This is important to understand the requirements of the Executive Order mentioned in the introduction and to put everything into context.
 
-\subsection{Software Identification}
-Uniquely identify a piece of software is a frequent concern when managing applications on enterprise scale. Thus, a standardized naming convention would be required. Unfortunately, pretty much every packet manager and tool uses its own convention.\\
+\section{Software Identification}
+Uniquely identifying a piece of software is a frequent concern when managing applications on enterprise scale. Thus, a standardized naming convention would be required. Unfortunately, pretty much every packet manager and tool uses its own convention.\\
 
 \noindent
 \textbf{Package URL (purl)}\\
@@ -30,13 +29,13 @@ Each component is separated by a different specific character to allow for unamb
 
 Another convention to uniquely identify packages is the \textit{Common Package Enumeration (CPE)} format which is primarily used in the context of vulnerability management ecosystem. Therefore, the standard will be discussed in the following section.
 
-\subsection{Open Source Software and Licensing}
+\section{Open Source Software and Licensing}
 \textit{Open Source Software} is widely used in modern software development. As to what Open Source Software actually is, the \textit{Open Source Initiative} defined a set of rules, the \textit{Open Source Definition} specifying distribution terms that the license of a software must comply with. Without going into detail and examining all of these terms, this definition generally ensures that such software "can be freely accessed, used, changed, and shared (in modified or unmodified form) by anyone" \cite{OSI}.\par
 This description on its own may give the impression that there is no need to keep track of what \textit{OSS Licenses} are used within an enterprise application. But there are still some limitation that \textit{OSS Licenses} can put to the usage, especially the distribution of the software. Specifically, the so called \textit{copyleft} principle and corresponding licenses might pose a challenge to some companies. While OSS generally may be used for commercial purposes, this principle dictates that if a company or individual distributes the software or a derivative, it has to be done under the same license it has been received under \cite{OSI}.\\
 
 In the context of this work, OSS will be used within other OSS components, so \textit{copyleft} is not an issue. But anyway, there is still a risk involved in using OSS. A company might distribute initial software versions under an OSS License until there is some kind of customer lock-in and then switch to another more restrictive license for further versions. Also, since there might not exists precedent cases regarding the legal interpretation of some specific OSS licenses, there is a risk of expensive law suits.
 
-\subsection{Vulnerability Management}
+\section{Vulnerability Management}
 Due to the widespread use of OSS, vulnerability management is an increasingly important topic. Since many organizations use the same software components, vulnerabilities often become publicly known. Also, the open source nature allows attackers to get precise information about the vulnerability itself. Thus, tracking publicly known vulnerabilities in an organizations software products is a crucial capability to keep them secure.\\
 
 \noindent
@@ -94,7 +93,7 @@ Thereby \lstinline|part| may be \textit{a} for applications, \textit{o} for oper
 The NVD is a database of vulnerabilities owned and maintained by NIST. In the paragraph about CVE, it was mentioned that the \textit{CVE Records} do not contain technical data, information about risks and impact, or fixes. The NVD feeds from the \textit{CVE List} and uses the information provided in the \textit{CVE Records} to perform further analysis. As a result, a NVD entry exists for each \textit{CVE ID} and provides a \textit{CVSS Base Score}, a \textit{CWE ID} and a \textit{CPE ID} \cite{NVDWebsite}.\par 
 Thus, NVD combines all the aforementioned standards and concepts to provide thorough and concise human and machine-readable information about vulnerabilities. \textit{CPE IDs} identifying a particular software version in use may be queried against a NVD API to automatically check for known vulnerabilities. The \textit{CVSS Base Score} is a valuable foundation for internal risk assessment and the \textit{CWE ID} helps to quickly understand the type of a vulnerability.\\
 
-\subsection{Software Bill of Materials} \label{sec:SBOM}
+\section{Software Bill of Materials} \label{sec:SBOM}
 A \textit{Software Bill of Materials} is an inventory of the components used in a software. It ideally contains all direct and transitive components and their dependencies, so it is in other words pretty much the dependency graph of a software \cite{OWASPWebsite,NTIASBOM}.\\
 
 As consequence to an \textit{Executive Order on Improving the Nation's Cybersecurity}, the \textit{National Telecommunications and Information Administration (NTIA)} published a document describing the minimum requirements for SBOMs \cite{ExecutiveOrderSBOM,NTIASBOM}). According to this document, these are:
@@ -187,7 +186,7 @@ Most of the tag:value pairs are self-explanatory, but some might require some ex
 It is also worth mentioning that the concept of \textit{Packages} in SPDX as a set of associated files is really rather loose. Thus, describing the project in figure \ref{fig:C Project} as two separate packages, one for source and one for binary, optionally in the same or also in two separate \textit{SPDX Documents} would be completely conform with the specification as well.\par
 Since SPDX has been around for so long and is an accepted ISO standard, there exists a lot of useful tooling. It is therefore quite easy to automate tasks like producing, consuming, transforming and validating \textit{SPDX Documents} \cite{SPDXWebsite}.\\
  
-\subsection{Regulations}
+\section{Regulations}
 Vulnerabilities and licenses are not the only risks associated with enterprise software. Companies also need to consider governmental regulations since violations may lead to fines that have critical impact on the business.\\
 
 \noindent
@@ -203,14 +202,3 @@ The ECCN is a 5 character alpha-numeric designation used to determine whether an
 \end{figure}
 
 All ECCNs are listed in the \textit{Commerce Control List (CCL)}. The entries in the list contain information about why an item might be under export control regulations. In the top of figure \ref{fig:ECCN Structure} is a snippet of such an entry. The reason for the export regulations of products with the classification number 4E993 is AT, which is the abbreviation for Anti-Terrorism \cite{ECCN}.
-
-\section{Context at SAP Gardener}
-Now, after the foundations have been laid out and there is a general understanding of both the goal of the thesis and the department, this section shall put those pieces together. Therefore, it will explain the Open Component Model (OCM) and why SAP Gardener even invented it instead of just using any other SBOM standard. Furthermore, it will elaborate how the Security and Compliance Data Lake may support SAP Gardener and increase the quality of the application lifecycle management.
-
-\subsection{SAP Gardener}
-
-
-\subsection{Open Component Model}
-
-\subsection{SAP Gardener Deployment Scenario}
-\section{Integration into the Application Lifecycle}
