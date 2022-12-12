@@ -4,58 +4,79 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%	
 
 \npchapter{System Design}
-This section describes the design of the \textit{Security and Compliance Data Lake}. It covers the conception of the data model, the selection of a database and the design of the the API. Thereby, it especially focuses on giving detailed information about the ideas and motives that lead to specific design decisions.
+This section describes the design of the \textit{Security and Compliance Data Lake}. It covers the conception of the data model, the selection of a database and the design of the API. Thereby, it especially discusses alternatives and focuses on giving detailed information about the ideas and motives that lead to specific design decisions.
 
 \section{Terminology}
-The System Design section makes use of a lot of heavily overloaded words which may lead to confusions and make it quite difficult to follow. To avoid this, the meaning(s) of those words in specific contexts will be specified in the following: \\
+The System Design section makes use of a lot of heavily overloaded words which may lead to confusion and make it quite difficult to follow. To prevent this, the meaning of those ambiguous words will be specified for this context in the following:\\
 
 \noindent
-\textbf{Component}\\
+\textbf{Component:} A component is an abstract entity describing a dedicated usage context or meaning for provided software, as defined by the OCM \cite{OCMSpec}.\\
+\textbf{Artifact:} An artifact is an umbrella term for sources and resources. Thus, the term refers to the actual source code or binaries.\\
+\textbf{Package:} A package is a functional unit contained in an artifact. In practice, a package is usually a collection of files, forming a library which is imported in the source code. 
 
-\noindent
-\textbf{Artifact}\\
+\section{Data Model}
+The basic entities relevant in the software supply chain are artifacts, thus sources and resources, and the packages comprising these artifacts.\par
+Compliance scanners usually scan entire source code repositories or binaries. Through different methodologies, these tools detect the packages contained in these scanned artifacts. By subsequently matching these packages against different databases such as the NVD introduced in the foundations chapter, known vulnerabilities and licenses are identified. To give a better idea of these results, figure \ref{fig:bdbaResult} in the appendix shows a snippet returned from the API of Black Duck Binary Analysis (BDBA).\par 
+The results on their own are useful already and provide interesting data about the above mentioned entities. But it is still loose metadata that lacks context information such as which deployments contain the corresponding entities. Therefore, an additional entity to conduct further grouping is required. The OCM already introduced such an entity, the component.\\\\
+To conclude this, from a high level perspective, the important entities are \emph{components}, \emph{sources}, \emph{resources}, \emph{packages} and the information attached to the packages such as vulnerabilities and licenses. To generalize this and abstract away from specific tools, the entity representing this information is called \emph{info snippet}.\par 
+So these entities are the basic building blocks for the data model. From here on, it is getting rather complex. A section listing the requirements beforehand was omitted on purpose, because they would have been very abstract and hard to follow. Instead, the requirements are now mentioned along the corresponding design decisions. To keep it even more tangible, below figure \ref{fig:DataModel} shows an entity-relationship model (ERM) describing the final data model. This may now be used as an anchor point throughout the following paragraphs discussing the requirements and design decisions leading up to the specific entities, relationships and cardinalities.
 
-\noindent
-\textbf{Package}
- 
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.65]{datamodel}
+	\caption[Data Model]{Data Model \source{Own representation}}
+	\label{fig:DataModel}
+\end{figure} 
+
+
+
+
+\section{Database}
+\section{API}
+Tool agnostic, how does the api look like to abstract away from different tools
 
 \section{Requirements}
-Before actually going into the details of the systems design, the requirements have to be specified, since they are at the core of pretty much every design decision. 
+Before actually going into the details of the systems design, the requirements have to be specified, since they are at the core of every design decision.  
 
 \subsection{Functional Requirements}
-\begin{xltabular}{\linewidth}{|l|X|}
-	\hline \rowcolor{lightgray}\multicolumn{2}{|l|}{\cellcolor{lightgray}{\textbf{Requirements}}} \\ \hline \rowcolor{lightgray} \textbf{Ref.\#} & \textbf{Functionality} \\ \hline
+\begin{xltabular}{\linewidth}{|l|X|l|}
+	\hline \hline \hline \rowcolor{lightgray}\multicolumn{3}{|l|}{\cellcolor{lightgray}{\textbf{Requirements}}} \\ \hline \rowcolor{lightgray} \textbf{Ref.\#} & \textbf{Functionality} & \textbf{Prio.}\\ \hline
 	\endfirsthead
 	
-	\hline \rowcolor{lightgray}\multicolumn{2}{|l|}{\cellcolor{lightgray}{\textbf{Requirements}}} \\ \hline \rowcolor{lightgray} \textbf{Ref.\#} & \textbf{Functionality} \\ \hline
+	\hline \hline \hline \rowcolor{lightgray}\multicolumn{3}{|l|}{\cellcolor{lightgray}{\textbf{Requirements}}} \\ \hline \rowcolor{lightgray} \textbf{Ref.\#} & \textbf{Functionality} & \textbf{Prio.}\\ \hline
 	\endhead
 	
-	\hline \multicolumn{2}{|r|}{{Continued on next page}} \\ \hline
+	\hline \multicolumn{3}{|r|}{{Continued on next page}} \\ \hline
 	\endfoot
 	
 	\hline \caption{Requirements} \label{Tab:Requirements}
 	\endlastfoot
 	
-	R.1 & The SCDL shall be able to consume and store data from multiple different data sources.\newline\newline
-	The SCDL shall be able to work with any kind of metadata about software components. Therefore, it has to be able to handle multiple different scanning tools, as well as other kinds of data sources like build tools. Thus, one has to consider that besides vulnerabilities and licenses, a variety of other data types may need to be added in the future. \\
+	R.1 & The SCDL shall be able to consume and store metadata from multiple different data sources.\newline\newline
+	The SCDL shall be able to work with any kind of metadata about software components.	Therefore, it has to be able to handle multiple different scanning tools, as well as other kinds of data sources like build tools. As an example, it might have to consume data from BDBA, Mend but perhaps also Jenkins. Thus, one has to consider that besides vulnerabilities and licenses, a variety of other metadata types may need to be added in the future. & 1\\
 	\hline
-	R.2 & The SCDL shall store the data from different data sources \textit{without aggregation}.\newline\newline
-	Different tools that generally serve the same purpose may provide similar information. To ensure that no data is lost, this information shall not be combined and aggregated for storing (\textit{aggregation} in this context means to e.g. combine the data about a package of a BDBA scan and a WhiteSource scan to an single package entity instance on database level).\\
+	R.2 & The SCDL shall store the metadata from different data sources without aggregation\footnotemark{}.\newline\newline
+	Different tools that generally serve the same purpose may provide similar information. As an example, BDBA and Mend are both SCA tools and therefore provide overlapping results. To ensure that no data is lost, this information shall not be combined and aggregated before storing.
+	\footnotetext{\textit{aggregation} in this context means to merge the data about a package of a BDBA scan and a Mend scan to a single package entity instance before storing} & 1\\
 	\hline
-	R.3 & The SCDL shall enable users to perform assessments.\newline\newline
-	The relevance of specific pieces of information such as vulnerabilities depend on the use case. There the SCDL has to provide a possibility to assess such pieces of information in the context of its occurrence.\\
+	R.3 & The SCDL shall provide the metadata from different data sources with aggregation\footnotemark[\value{footnote}].\newline\newline
+	As mentioned before, to ensure no data is lost, the data from different data sources shall be stored without aggregation. Anyway, to be consumed by a user, this data shall be aggregated. As an example, when querying all packages contained in a specific resource, the result returned by the SCDL shall not contain the same package twice in different representations, if it was identified by BDBA and by Mend. Instead, it shall contain an aggregated representation of the package. Thus, some kind of aggregation layer is needed which provides transparency regarding the data sources. & 1\\
 	\hline
-	R.4 & The SCDL shall enable users to query aggregated metadata of a component.\newline\newline
-	As mentioned before, to ensure no data is lost, the data from different data sources shall be stored without aggregation (\textit{aggregation} in this context means to e.g. combine the data about a package of a BDBA scan and a WhiteSource scan to an single package entity instance on database level). Anyway, to be consumed by a user, this data shall be aggregated. Thus, some kind of aggregation layer is needed.\\
+	R.4 & The SCDL shall provide a level of aggregation\footnotemark{} to group sources and resources.\newline\newline
+	\footnotetext{\textit{aggregation} in this context refers to the "whole/part" semantic of the word \cite{UML}. Thus, since resources and sources are comprised of packages, they are both aggregations of packages. On a model level, the same applies for the relationships between packages and vulnerabilities or licenses as well as between entire deployments and the deployed resources.}
+	As pointed out before, one problem also with SBOMs is the disconnection of the artifact metadata and the deployment information. To bridge this gap, an additional aggregation level for grouping artifacts is necessary. As an example, this additional aggregation level shall enable to group all resources contained in a specific deployment. & 1\\
 	\hline
-	R.5 & The SCDL shall enable users to query the aggregated metadata on different levels of aggregation.\newline\newline
-	The user shall be able to query a component and all its metadata as well as a package and all its metadata. Furthermore, information about vulnerabilities and licenses shall bubble up when querying (so \textit{aggregation} in this context means to e.g. collect the vulnerabilities and licenses from packages contained in a component and perhaps also filter them based on the highest CVSS). 
-	\\
+	R.5 & The SCDL shall enable users to query the metadata on different levels of aggregation\footnotemark[\value{footnote}]\newline\newline
+	As an example, a user shall be able to query for all vulnerabilities in a specific resource, thus query on the aggregate level of resources. But a user shall also be able to query for all vulnerabilities in an entire specific deployment, thus querying on the aggregate level of deployments (querying on this level of aggregation enables to answer where Log4J is deployed). & 1\\
 	\hline
-	R.8 & The SCDL shall provide means to request the SBOM.\newline\newline
-	In order to be able to fulfill governmental requirements like the executive order mentioned in \ref{sec:SBOM} about the Software Bill of Materials, the SCDL has to provide a way to request an SBOM.\\
+	R.6 & The SCDL shall enable users to perform assessments.\newline\newline
+	The relevance of specific pieces of information such as vulnerabilities or licenses depends on the use case. As an example, while the internal usage of an altered OSS with a copyleft license is lawful, the distribution is not. Therefore, a possibility has to be provided to assess such pieces of information in the context of their occurrence. & 1\\
 	\hline
-	R.9 & Removal of old unused versions
+	R.7 & The SCDL shall provide common data aggregation and filter functions for the queries.\newline\newline
+	As an example, a user shall be able to filter for the vulnerability with the highest CVSS within a resource or shall be able to get the count of vulnerabilities within a resource. & 2\\
+	\hline
+	R.8 & The SCDL shall enable users to query the metadata in the common SBOM formats.\newline\newline
+	In order to be able to fulfill governmental requirements of the executive order mentioned in the Software Bill of Materials section, the SCDL has to provide a way to to query the metadata in the common SBOM formats. As an example, a user shall be able to query the SPDX document for a specific resource. & 2\\
 \end{xltabular}
 
 \subsection{Non-functional Requirements}
@@ -64,9 +85,3 @@ Scalable (Wie viele Daten fallen im Gardener an? Wie lange wird das gut gehen? D
 
 ~200MB/Day pro Scanner
 
-\section{Data Model}
-
-
-\section{Database}
-\section{API}
-Tool agnostic, how does the api look like to abstract away from different tools
