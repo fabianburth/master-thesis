@@ -6,7 +6,7 @@
 \npchapter{Foundations} \label{Foundations}
 This chapter provides the basic knowledge necessary to understand the following chapters as well as other research and literature regarding metadata management. It therefore explains several important concepts and abbreviations around \textit{Software Identification}, \textit{Open Source}, \textit{Open Source Licensing} as and \textit{Vulnerability Management}. Furthermore \textit{Software Bill of Materials} and existing \textit{Software Bill of Material Standards} are introduced. This is important to understand the requirements of the Executive Order mentioned in the introduction and to put everything into context.
 
-\section{Software Identification}
+\section{Software Identification} \label{sec:Software Identification}
 Uniquely identifying a piece of software is a frequent concern when managing applications on enterprise scale. Thus, a standardized naming convention would be required. Unfortunately, pretty much every packet manager and tool uses its own convention.\\
 
 \noindent
@@ -35,7 +35,7 @@ This description on its own may give the impression that there is no need to kee
 
 In the context of this work, OSS will be used within other OSS components, so \textit{copyleft} is not an issue. But anyway, there is still a risk involved in using OSS. A company might distribute initial software versions under an OSS License until there is some kind of customer lock-in and then switch to another more restrictive license for further versions. Also, since there might not exists precedent cases regarding the legal interpretation of some specific OSS licenses, there is a risk of expensive law suits.
 
-\section{Vulnerability Management}
+\section{Vulnerability Management} \label{sec:Vulnerability Management}
 Due to the widespread use of OSS, vulnerability management is an increasingly important topic. Since many organizations use the same software components, vulnerabilities often become publicly known. Also, the open source nature allows attackers to get precise information about the vulnerability itself. Thus, tracking publicly known vulnerabilities in an organizations software products is a crucial capability to keep them secure.\\
 
 \noindent
@@ -52,7 +52,7 @@ To solve this issue, the \textit{CVE Program} assigns unique identifiers, so cal
 \begin{figure}[H]
 	\centering
 	\includegraphics{cverecord}
-	\caption[CVE Record]{CVE Record \source{\cite{CVEMITREWebsite}}}
+	\caption[CVE Record]{CVE Record \source{Based on \cite{CVEMITREWebsite}}}
 	\label{fig:CVE Record}
 \end{figure}
 
@@ -197,7 +197,7 @@ The ECCN is a 5 character alpha-numeric designation used to determine whether an
 \begin{figure}[H]
 	\centering
 	\includegraphics[scale=0.6]{eccn}
-	\caption[ECCN Structure]{ECCN Structure \source{\cite{ECCN}}}
+	\caption[ECCN Structure]{ECCN Structure \source{Based on \cite{ECCN}}}
 	\label{fig:ECCN Structure}
 \end{figure}
 
