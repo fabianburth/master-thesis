@@ -54,3 +54,78 @@ $$\Sigma K_{root} = n_0 - 1$$
 And since $n_0 = N + 1$, the number of keys in a B-tree is
 
 $$\Sigma K_{root} = N + 1 - 1 = N$$
+
+\section{Data Definition Statement for SQL Sample Data} \label{apx:Data Definition Statement for SQL Sample Data}
+
+\begin{lstlisting}[language=SQL, caption=DDL Statements, captionpos=b, label=lst:DDLStatements]
+CREATE TABLE PackageVersion(
+ID int,
+Name varchar(100),
+Version varchar(100)
+);
+
+INSERT INTO PackageVersion VALUES 
+(1, 'log4j', '1.5.2'), -- depends on spring-context directly
+(2, 'spring-context', '1.2.12'),
+(3, 'java-jdk', '1.3.1'), -- direct dependency of spring context
+(4, 'spring-boot', '1.15.3'), -- depends on spring-context transitively (spring-boot -> log4j -> spring-context)
+(99, 'spring-core', '2.1.4'); -- direct dependency of spring context
+
+CREATE TABLE DependsOn(
+PackageVersionID int,
+RelatedPackageVersionID int
+);
+
+INSERT INTO DependsOn VALUES 
+(1, 2), 
+(2, 3), 
+(2, 99),
+(4, 1),
+(99, 3);
+\end{lstlisting}
+
+\section{Data Definition Statement for MongoDB Sample Data} \label{apx:Data Definition Statement for MongoDB Sample Data}
+\begin{lstlisting}[language=JSON, caption=JSON, captionpos=b, label=lst:DDLStatements]
+db={
+  "orders": [{
+    "_id": 1,
+    "date": "04.01.2023",
+    "shippingAddress": {
+      "city": "Berlin",
+      "street": "Kreuzberg" },
+    },
+    {
+    "_id": 2,
+    "date": "05.01.2023",
+    "shippingAddress": {
+    "city": "Hamburg",
+    "street": "Sesame Street" },
+  }],
+  "relations": [{
+    "_id": 1,
+    "order": 1,
+    "product": 1
+    },
+	{
+    "_id": 2,
+    "order": 1,
+    "product": 2
+    },
+    {
+    "_id": 3,
+    "order": 2,
+    "product": 2
+  }],
+  "products": [{
+    "_id": 1,
+    "name": "The Hitchhiker's Guide to the Galaxy",
+    "price": 7.50,
+    },
+    {
+    "_id": 2,
+    "name": "The Art of Computer Programming",
+    "price": 120.00,	
+  }]
+}
+\end{lstlisting}
+

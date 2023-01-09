@@ -1,8 +1,13 @@
 ﻿% This file was created with Citavi 6.14.0.0
 
-@proceedings{,
- year = {2020},
- title = {2020 IEEE 24th International Enterprise Distributed Object Computing Conference (EDOC)}
+@book{,
+ year = {1970},
+ title = {Software Pioneers},
+ address = {Berlin, Heidelberg},
+ publisher = {Springer-Verlag},
+ isbn = {978-3-642-63970-8},
+ editor = {Broy, Manfred and Denert, Ernst},
+ doi = {10.1007/978-3-642-59412-0}
 }
 
 
@@ -213,6 +218,16 @@
 }
 
 
+@misc{DynamoDBPartitionKey,
+ abstract = {This blog post covers important considerations and strategies for choosing the right partition key for designing a schema that uses Amazon DynamoDB. Choosing the right partition key is an important step in the design and building of scalable and reliable applications on top of DynamoDB. What is a partition key? DynamoDB supports two types of [$\ldots$]},
+ author = {{Amazon Web Services}},
+ year = {2017},
+ title = {Choosing the Right DynamoDB Partition Key | Amazon Web Services},
+ url = {https://aws.amazon.com/blogs/database/choosing-the-right-dynamodb-partition-key/},
+ urldate = {04.01.2023}
+}
+
+
 @misc{ECCN,
  author = {{Bureau of Industry and Security}},
  year = {31.08.2022},
@@ -257,7 +272,7 @@
 @misc{InnoDB,
  author = {MySQL},
  year = {27.12.2022},
- title = {MySQL :: MySQL 8.0 Reference Manual :: 15.6.2.2 The Physical Structure of an InnoDB Index},
+ title = {The Physical Structure of an InnoDB Index},
  url = {https://dev.mysql.com/doc/refman/8.0/en/innodb-physical-structure.html},
  urldate = {27.12.2022}
 }
@@ -335,6 +350,78 @@
 }
 
 
+@misc{MongoDBAggrPipeline,
+ author = {MongoDB},
+ year = {15.12.2022},
+ title = {Aggregation Pipeline --- MongoDB Manual},
+ url = {https://www.mongodb.com/docs/manual/core/aggregation-pipeline/},
+ urldate = {09.01.2023}
+}
+
+
+@misc{MongoDBAppliedDesign,
+ author = {Copeland, Rick},
+ year = {05.01.2023},
+ title = {MongoDB Applied Design Patterns},
+ url = {https://www.oreilly.com/library/view/mongodb-applied-design/9781449340056/ch01.html},
+ urldate = {05.01.2023}
+}
+
+
+@misc{MongoDBDataModeling,
+ author = {MongoDB},
+ year = {15.12.2022},
+ title = {Data Model Design --- MongoDB Manual},
+ url = {https://www.mongodb.com/docs/manual/core/data-model-design/},
+ urldate = {05.01.2023}
+}
+
+
+@misc{MongoDBDocumentSizeLimit,
+ author = {MongoDB},
+ year = {15.12.2022},
+ title = {Documents --- MongoDB Manual},
+ url = {https://www.mongodb.com/docs/manual/core/document/},
+ urldate = {05.01.2023}
+}
+
+
+@misc{MongoDBGettingStarted,
+ author = {MongoDB},
+ year = {15.12.2022},
+ title = {Getting Started --- MongoDB Manual},
+ url = {https://www.mongodb.com/docs/manual/tutorial/getting-started/},
+ urldate = {04.01.2023}
+}
+
+
+@misc{MongoDBShardKey,
+ author = {MongoDB},
+ year = {15.12.2022},
+ title = {Shard Keys --- MongoDB Manual},
+ url = {https://www.mongodb.com/docs/manual/core/sharding-shard-key/},
+ urldate = {04.01.2023}
+}
+
+
+@misc{MongoDBTransactions,
+ author = {MongoDB},
+ year = {04.01.2023},
+ title = {Transactions --- MongoDB Manual},
+ url = {https://www.mongodb.com/docs/upcoming/core/transactions/?_ga=2.253462026.2043037084.1672846301-992452135.1672752487},
+ urldate = {05.01.2023}
+}
+
+
+@misc{mysqlCTE,
+ author = {MySQL},
+ year = {02.01.2023},
+ title = {WITH (Common Table Expressions)},
+ url = {https://dev.mysql.com/doc/refman/8.0/en/with.html},
+ urldate = {02.01.2023}
+}
+
+
 @book{neo4j,
  abstract = {Discover how graph databases can help you manage and query highly connected data. With this practical book, you'll learn how to design and implement a graph database that brings the power of graphs to bear on a broad range of problem domains. Whether you want to speed up your response to user queries or build a database that can adapt as your business evolves, this book shows you how to apply the schema-free graph model to real-world problems.{\textless}/p{\textgreater}
 
@@ -347,6 +434,28 @@ This second edition includes new code samples and diagrams, using the latest Neo
  publisher = {O'Reilly},
  isbn = {9781491930861},
  file = {Robinson, Webber et al. 2015 - Graph databases:Attachments/Robinson, Webber et al. 2015 - Graph databases.pdf:application/pdf}
+}
+
+
+@book{NoSQL,
+ author = {Nayak, Ameya and Poriya, Anil and Poojary, Dikshay},
+ year = {2013},
+ title = {Type of NOSQL databases and its comparison with relational databases},
+ url = {https://research.ijais.org/volume5/number4/ijais12-450888.pdf},
+ file = {Type of NOSQL databases 2013:Attachments/Type of NOSQL databases 2013.pdf:application/pdf}
+}
+
+
+@book{NoSQLDistilled,
+ author = {Sadalage, Pramod J. and Fowler, Martin},
+ year = {2013},
+ title = {NoSQL distilled: A brief guide to the emerging world of polyglot persistence},
+ url = {https://bigdata-ir.com/wp-content/uploads/2017/04/NoSQL-Distilled.pdf},
+ price = {pbk. : USD 39.99},
+ address = {Upper Saddle River, NJ and Munich},
+ publisher = {Addison-Wesley},
+ isbn = {0321826620},
+ series = {Always learning}
 }
 
 
@@ -415,6 +524,26 @@ This second edition includes new code samples and diagrams, using the latest Neo
 }
 
 
+@misc{postgresCTE,
+ abstract = {7.8.{\&}nbsp;WITH Queries (Common Table Expressions) 7.8.1. SELECT in WITH 7.8.2. Recursive Queries 7.8.3. Common Table Expression Materialization 7.8.4. Data-Modifying Statements $\ldots$},
+ author = {{PostgreSQL Documentation}},
+ year = {2022},
+ title = {WITH Queries (Common Table Expressions)},
+ url = {https://www.postgresql.org/docs/current/queries-with.html},
+ urldate = {02.01.2023}
+}
+
+
+@misc{PostgreSQLJoin,
+ abstract = {52.5.{\&}nbsp;Planner/Optimizer 52.5.1. Generating Possible Plans The task of the planner/optimizer is to create an optimal execution plan. A given SQL $\ldots$},
+ author = {{PostgreSQL Documentation}},
+ year = {2022},
+ title = {PostgreSQL Join Algorithm},
+ url = {https://www.postgresql.org/docs/current/planner-optimizer.html},
+ urldate = {09.01.2023}
+}
+
+
 @misc{purl,
  abstract = {A minimal specification for purl aka. a package {\textquotedbl}mostly universal{\textquotedbl} URL, join the discussion at https://gitter.im/package-url/Lobby   - package-url/purl-spec: A minimal specification for purl aka. a package {\textquotedbl}mostly universal{\textquotedbl} URL, join the discussion at https://gitter.im/package-url/Lobby},
  author = {GitHub},
@@ -429,6 +558,7 @@ This second edition includes new code samples and diagrams, using the latest Neo
  author = {Codd, E. F.},
  year = {1990},
  title = {The relational model for database management: Version 2},
+ url = {https://dl.acm.org/doi/pdf/10.5555/77708},
  address = {Reading, Mass. {\textless}etc.{\textgreater}},
  edition = {1st ed. 1990, repr. with corr},
  publisher = {Addison-Wesley},
@@ -554,6 +684,24 @@ This second edition includes new code samples and diagrams, using the latest Neo
  title = {Software Package Data Exchange (SPDX)},
  url = {https://spdx.dev/},
  urldate = {09.08.2022}
+}
+
+
+@misc{sqliteCTE,
+ author = {SQLite},
+ year = {02.01.2023},
+ title = {The WITH Clause},
+ url = {https://www.sqlite.org/lang_with.html},
+ urldate = {02.01.2023}
+}
+
+
+@misc{SQLvsNOSQLPerformance,
+ abstract = {With the current emphasis on ``Big Data'', NoSQL databases have surged in popularity. These databases are claimed to perform better than SQL databases. In this paper we aim to independently investigate the performance of some NoSQL and SQL databases in the light of key-value stores. We compare read, write, delete, and instantiate operations on key-value stores implemented by NoSQL and SQL databases. Besides, we also investigate an additional operation: iterating through all keys. An abstract key-value pair framework supporting these basic operations is designed and implemented using all the databases tested. Experimental results measure the timing of these operations and we summarize our findings of how the databases stack up against each other. Our results show that not all NoSQL databases perform better than SQL databases. Some are much worse. And for each database, the performance varies with each operation. Some are slow to instantiate, but fast to read, write, and delete. Others are fast to instantiate but slow on the other operations. And there is little correlation between performance and the data model each database uses.},
+ author = {Li, Yishan and Manoharan, Sathiamoorthy},
+ year = {04.01.2023},
+ title = {A performance comparison of SQL and NoSQL databases},
+ urldate = {04.01.2023}
 }
 
 
