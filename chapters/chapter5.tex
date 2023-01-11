@@ -139,7 +139,7 @@ After the application context and data model are defined, a suitable database ha
 
 \subsection{Requirements for the Database}
 The most important aspect regarding the suitability of a database technology is the purpose of the data store and the respective kind of usage. Several relevant factors depend on this information. Is read or write performance more important? What may be acceptable delays when reading or writing data? What kind of queries may be used most frequently? Will the data be used for statistical analysis and require a lot of aggregation over dimensions such as time periods or locations? Are the entities highly inter-connected and require traversing relationships efficiently? How many users may need to access the data concurrently? May the database need to be distributed?\\\\
-\textbf{Write Performance:} The data may be provided by all sorts of data sources. As already described in the reference architecture in section \ref{sec:Integration of the Security and Compliance Data Lake into the SAP Gardener Landscape} "Integration of the Security and Compliance Data Lake into the SAP Gardener Landscape", the data may be fetched based on policies. Considering scanning tools, such policies may require to scan all Component Versions or respectively the referenced technical artifacts once a day or based on particular events, such as upon creation of a new Component Version. Depending on the number and size of artifacts, the scans themselves take something between several minutes up to several hours. As the information in the database may be updated concurrently with the scanning process, so for example every time the scanning tools has finished scanning a particular artifact, the results may be fetched, the \emph{write performance may be quite low}. Theoretically, the database could correspondingly to the scanning tools take up to several minutes to write or update the information about an artifact.\\
+\textbf{Write Performance:} The data may be provided by all sorts of data sources. As already described in the reference architecture in section \ref{sec:Integration of the Security and Compliance Data Lake into the SAP Gardener Landscape} "Integration of the Security and Compliance Data Lake into the SAP Gardener Landscape", the data may be fetched based on policies. Considering scanning tools, such policies may require to scan all Component Versions or respectively the referenced technical artifacts once a day or based on particular events, such as upon creation of a new Component Version. Depending on the number and size of artifacts, the scans themselves take something between several minutes up to several hours. As the information in the database may be updated concurrently with the scanning process, so for example every time the scanning tool has finished scanning a particular artifact, the results may be fetched, the \emph{write performance may be quite low}. Theoretically, the database could correspondingly to the scanning tools take up to several minutes to write or update the information about an artifact.\\
 \textbf{Read Performance:} As already pointed out in section \ref{sec:Non-functional Requirements} "Non-functional Requirements", the Security and Compliance Data Lake may prospectively be used as backend for dashboard web applications. Of course, these dashboards are for technical professionals. Thus, the response time does not necessarily need to abide to common UX design requirements, but still common queries should ideally not take more than several seconds. So \emph{read performance should be high}.\\
 \textbf{Queries:} The most popular example for a query is "Which deployments contain Log4J?" or more precisely in terms of the previously introduced data model "Which Component Versions contain a vulnerable Log4J Package Version?" or even "Which Component Versions contain the Log4J Vulnerability?". Considering the exemplary data model in figure \ref{fig:RefDataModel}, to resolve this query, one has to find the \emph{Vulnerability} with \emph{CVE} \textit{CVE-2021-44228} \cite{Log4jVuln}, find all \emph{Package Versions} that contain this \emph{Vulnerability} and also all \emph{Package Versions} that directly on transitively depend on one of those \emph{Package Versions}, find all \emph{Source} and \emph{Resource Versions} that contain one of the respective \emph{Package Versions} and finally find all \emph{Component Versions} that reference one of the respective \emph{Artifacts}. Thus, resolving this query requires traversing a lot of relationships. This is probably also the most popular kind of query in general. Queries including aggregations may be something like "What Vulnerability contained in a Deployment X has the highest CVSS?". Therefore, even the queries including aggregation require a traversal of relationships to retrieve the subset of data the aggregation function has to be applied to.\\
 \textbf{Distribution:} The database is the central metadata store of a company which is used to monitor the application landscape and increase the transparency of the infrastructure. Therefore, the number of concurrent users will not be exceedingly high. Besides, the whole application and thus, also the underlying database is not business critical for a company. So database distribution to increase scalability in terms of parallel queries or to increase availability and fault tolerance are not a primary concern for the Security and Compliance Data Lake.\\\\
@@ -150,7 +150,7 @@ From here on, this rough overview provides a good idea of the most important pro
 \subsection{Relational Databases}
 The first database technology analyzed are \textit{relational databases}. They are by far the most popular and widely used database technology. This is represented in Stack Overflow's 2021 developer survey \cite{StackoverflowDeveloperSurvey}. There, the top 3 most used databases are MySQL, PostgreSQL and SQLite, which are all relational databases. Among the technologies discussed in detail here, it also has been around for the longest as the original paper introducing the relational model for databases by Edgar Codd was published in 1970 \cite{RelationalDatabaseOriginalPaper}. Therefore, the technology itself is very mature and there is a lot of know-how in the industry. Thus, relational databases are worth considering for every enterprise project.
 
-\subsubsection{Theoretical Foundations}
+\subsubsection{Theoretical Foundations} \label{sec:Theoretical Foundations Relational Database}
 A quick repetition of the foundations of relational databases. The name "relational database" stems from the mathematical definition of relation: 
 
 \begin{quote}
@@ -203,7 +203,7 @@ Furthermore, on every level at most $m$ keys have to be searched. As the element
 $$ s \leq \lceil (1 + log_{\lceil m/2 \rceil}(\frac{N + 1}{2})) \rceil * log_2(m) $$ 
 Considering Big O notation, constants may be ignored. Also $m$ is definitely smaller than and independent of $N$. This leads to a worst case time complexity for searching a B-tree of 
 $$ O(log N) $$ 
-The estimation is also true for B\textsuperscript{+}-trees.\footnote{Although this section covers several details, it is still just a very brief introduction into relational databases, the internals of database systems and B-trees, only covering the topics in the depth necessary for understanding the further sections. Aspects such as transactions and ACID criteria, how the records are actually placed on the disk, how variable-length fields are handled or what happens when records exceed page boundaries have been omitted. Regarding B/b\textsuperscript{+}-trees, the algorithms used for insertion or deletion and their respective bounds on running time are not discussed either. For further and more detailed information on these topics, refer to the respective sources "The Relational Model for Database Management" \cite{RelationalDatabaseModel}, "Fundamentals of Database Systems" \cite{DatabaseFundamentals} and "The Art of Computer Programming - Searching and Sorting" \cite{SortingSearchingBible}.}
+The estimation is also true for B\textsuperscript{+}-trees.\footnote{Although this section covers several details, it is still just a very brief introduction into relational databases, the internals of database systems and B-trees, only covering the topics in the depth necessary for understanding the further sections. Aspects such as transactions and ACID criteria, how the records are actually placed on the disk, how variable-length fields are handled or what happens when records exceed page boundaries have been omitted. Regarding B/B\textsuperscript{+}-trees, the algorithms used for insertion or deletion and their respective bounds on running time are not discussed either. For further and more detailed information on these topics, refer to the respective sources "The Relational Model for Database Management" \cite{RelationalDatabaseModel}, "Fundamentals of Database Systems" \cite{DatabaseFundamentals} and "The Art of Computer Programming - Searching and Sorting" \cite{SortingSearchingBible}.}
 
 \subsubsection{Suitability for the Central Metadata Store}
 To evaluate and properly illustrate the suitability of the database technology regarding the aforementioned relevant properties, a representative example based on the established data model is used. The complete data model is quite complex and its actual instantiated form, thus the final entities, relationships and especially the properties, depends on the use case. Therefore, to keep the considerations general and clear, the representative example only considers the \emph{Package Version} entity type. Since \emph{Package Versions} may be contained in other \emph{Package Versions} this example allows for considering arbitrarily complex relationship chains.\par
@@ -228,8 +228,8 @@ SELECT p1.Name, p1.Version
  WHERE p2.Name = "spring-context" AND p2.Version = "1.2.12"
 \end{lstlisting}
 
-Based on the sample data in figure \ref{fig:PackageVersionsAndDependencies}, this returns \emph{java-jdk 1.3.1} and \emph{spring-core 2.1.4} \cite{neo4j}. Although slightly hard to read, the query is still relatively simple and not particularly computationally expensive, because it constraints the number of rows under consideration by applying the filter \lstinline|WHERE p2.Name = "spring-context" AND | \lstinline|p2.Version = "1.2.12"|. Based on the indexes, this initial look up of this record has a time complexity of $O(log(n))$ with $n$ being the number of rows in the PackageVersion table. The consecutive join then has a time complexity of $O(n*log(m))$ with $n$ being the number of records found during the previous look up and $m$ being the number of rows in the DepensOn table. Each additional join in the query adds a $O(n*log(m))$. This assumes the so called nested loop join algorithm is used. This is usually the most efficient join algorithm in such scenarios, where indexes on the join condition exist and it is a small number of rows that have to be joined. Relational databases automatically estimate and choose the best strategy \cite{PostgreSQLJoin}. Thus, depending on the number of joins, the general time complexity for such a relationship traversal query may be estimated as 
-$$O(log(n)) + O(n*log(m)) + ... + O(n*log(m))$$ 
+Based on the sample data in figure \ref{fig:PackageVersionsAndDependencies}, this returns \emph{java-jdk 1.3.1} and \emph{spring-core 2.1.4} \cite{neo4j}. Although slightly hard to read, the query is still relatively simple and not particularly computationally expensive, because it constraints the number of rows under consideration by applying the filter \lstinline|WHERE p2.Name = "spring-context" AND | \lstinline|p2.Version = "1.2.12"|. Based on the indexes, this initial look up of this record has a time complexity of $O(log(n))$ with $n$ being the number of rows in the PackageVersion table. The consecutive join then has a time complexity of $O(m*log(n))$ with $m$ being the number of records found during the previous look up and $n$ being the number of rows in the DepensOn table. Each additional join in the query adds a $O(m*log(n))$. This assumes the so called nested loop join algorithm is used. This is usually the most efficient join algorithm in such scenarios, where indexes on the join condition exist and it is a small number of rows that have to be joined. Relational databases automatically estimate and choose the best strategy \cite{PostgreSQLJoin}. Thus, depending on the number of joins, the general time complexity for such a relationship traversal query may be estimated as 
+$$O(log(n)) + O(m*log(n)) + ... + O(m*log(n))$$ 
 
 Now, to answer the reciprocal question "Which Package Versions depend on the spring-context:1.2.12 Package Version?" in a relational database, the following SQL query would have to be used:
 
@@ -381,6 +381,118 @@ Consequently, at least concerning the major entities, the data model would have 
 Besides, being \emph{schema less} is also not a really big advantage for this use case. Data integrity may not be enforced and at least parts of the data have to adhere to some schema, in order to being able to merge the data of different data sources. Generally, to increase data quality and queryability, a schema would be enforced on application level anyway.
 
 \subsection{Graph Databases}
+The last database technology analyzed are \emph{graph databases}. They are also a type of NoSQL database. Although especially Neo4j is doing a lot of advertising, graph databases are still the least known database technology, as also represented by their absence in Stack Overflow's 2021 developer survey \cite{StackoverflowDeveloperSurvey}.
+
+\subsubsection{Theoretical Foundation}
+The previous sections discussed the foundations of relational databases such as how the data is stored and how the common b-tree indexes work, thereby deducting the complexity of index based look ups and joins. As relational databases traverse relationships through joining records, this complexity provides a kind of measure for traversing relationships. Then relational databases have been compared to document databases, which work quite similar regarding indexes, look ups and join, but also provide the option to represent relationships through nested structures. Finally, this section examines graph databases, which take an entirely different approach of representing relationships between entities.\par
+Again, first a quick repetition of the foundations. The mathematical definition of a graph is the following: 
+\begin{quote}
+	\textit{A graph is a pair of sets $G = (V,E)$. In an undirected graph, the elements of $E$ are 2-element subsets $\{v,w\}$ of $V$. In a directed graph, the elements of $E$ are 2-element tuples $(v,w)$, thus ordered pairs, of $V$.}
+	\cite{IntroductionToAlgorithms}
+\end{quote}
+In this definition, $V$ refers to \emph{vertices}, or rather \emph{nodes}, and $E$ refers to \emph{edges}. Quite frequently, $v \epsilon S1$ and $w \epsilon S2$ with $V = S1 \cup S2$, thus, two nodes $v$ and $w$ connected through an edge $(v,w)$ are elements of different sets. So, $E$ is a subset of the Cartesian product of $S1 x S2$. Looking back at the definition of relations in section \ref{sec:Theoretical Foundations Relational Database} "Theoretical Foundations" of relational databases, this is also the definition of a relation.\par
+Thus, $E$ is a \emph{relation} and $V$ is the union of the \emph{source set} and \emph{destination set}. Now, this is generally well known from functions, which are defined by a \emph{domain} $S1$, a \emph{codomain} $S2$ and a \emph{mapping} $f$, which assigns elements of $S1$ to elements of $S2$. Hence, drawing a function in a coordinate system is essentially the visualization of a graph, where commonly the \emph{x-axis} denotes the \emph{source set} and the \emph{y-axis} denotes the \emph{destination set} and the dots, or rather line, for most common functions denotes the \emph{relation}.\par
+In practice with business data, the source set and the destination set are usually sets of discrete and finite elements and the relationship between them is rather artificial and application specific. A primitive example, $S1$ may be the set of all package names, $S2$ may be the set of all version numbers and the relation $E$ $(v, w)$ may be package versions. Thereby, the source set and destination set are rather irrelevant. Besides, one could argue that for the scope of an application, the union of all $v$ in $E$ is equal to the source set and the union of all $w$ in $E$ is equal to the destination set.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.70]{table_vs_graph}
+	\caption[graph representations]{Graph Representations}
+	\label{fig:GraphTheoryExample}
+\end{figure}
+
+So, for the scope of an application, the table and the vertices and edges in figure \ref{fig:GraphTheoryExample} may be interpreted as two different representation of the same graph. This comparison of relations and graphs may be a slightly abstract and the example is oversimplified, but its purpose is to show how these two concepts and their common representations are tightly coupled.\\\\
+The first part approached the topic from a mathematical perspective. From here on, this shifts to the actual technologies. Although the previous example may indicate this, in graph databases the graph is not used as a different representation for classical relations, hence to represent the relation of the properties of an entity. It is rather used to represent the relationships between the different entities. Thus, even though figure \ref{fig:GraphTheoryExample} is theoretically accurate, the following figure \ref{fig:GraphDBExample} is more suitable from a database technology perspective.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.60]{graphdb}
+	\caption[Graph Database Representation]{Graph Database Representation}
+	\label{fig:GraphDBExample}
+\end{figure}
+
+This graph model is called \emph{labeled property graph}. As defined in the "Graph Databases - New Opportunities for Connected Data" written by engineers of the Neo4j database, a labeled property graph has the following characteristics \cite{neo4j}:
+
+\begin{quote}
+	\begin{enumerate}
+		\item\textit{It contains nodes and relationships. }
+		\item\textit{Nodes contain properties (key-value-pairs). }
+		\item\textit{Nodes can be labeled with one or more labels. }
+		\item\textit{Relationships are named and directed, and always have a start and end node. }
+		\item\textit{Relationships can also contain properties. }
+	\end{enumerate}
+\end{quote}
+
+This model is generally quite intuitive. But obviously, even in this more complex example, with the suitable interpretation of the table (thus, instead of interpreting the relation itself, the foreign key relationships are considered), it still expresses the same graph as the nodes and relationships. And, as discussed previously, document databases are able to express this graph as well, either also through a normalized model or through nested documents.\\\\ 
+\emph{So the key difference of graph databases is not that they store graphs in general. The key difference is that their file organization and data processing is optimized to work with graph data.}\par
+As shown in figure \ref{fig:GraphDBExample} on the left bottom, table representations and consequently relational databases use an index to link entities, or in this context rather nodes. To increase the performance of reciprocal queries, an additional index may be created on \emph{Related Package Version ID}. These \emph{indexes are global}, so as the graph grows, so do the indexes.\par 
+In contrast, in graph databases with native processing capabilities each node often maintains direct references to link nodes. Thus, each node maintains kind of a \emph{local index} whose size and consequently performance do not depend on the total size of the graph. This concept of linking adjacent nodes is commonly referred to as \emph{index-free adjacency}.\footnote{There has been a lot of discussion whether index-free adjacency is a requirement for graph databases \cite{graphdbdiscussion}. The current consensus seems to be that it is not, since especially ArangoDB developed another approach to the problem which allows similar complexities as index-free adjacency for traversing graphs \cite{arangodbhybridindexes}.} For further assumptions and explanations, the architecture of the Neo4j database is considered \cite{neo4j}.\par
+So, when querying "Which Package Versions does the spring-context:1.2.12 Package Version depend on?", the initial look up still has a complexity of $O(log(n))$, but finding the related packages is $O(1)$ instead of $O(log(n))$. Since nodes maintain references to nodes with incoming as well as to nodes with outgoing relationships, the reciprocal query "Which Package Versions depend on the spring-context:1.2.12 Package Version?" may be answered with the exact same complexity \cite{neo4j}.\par 
+So given this complexities, in theory graph databases scale and perform better than other database technologies when the application involves a lot of graph traversals.\footnote{As before, this theoretical foundation chapter is obviously not complete. Especially the file organization which enables the fast traversals are an interesting topic. For a good and thorough explanation of a implementation, refer to "Graph Databases - New Opportunities for Connected Data" \cite{neo4j}.}
+
+\subsubsection{Suitability for the Central Metadata Store}
+This suitability section takes a similar approach as the first one evaluating the suitability of the relational database. Thus, examining the same representative \emph{Package Version} example. This allows for a direct comparison afterwards. Below figure \ref{fig:PackageVersionsAndDependenciesGraph} therefore illustrates the equivalent example from \ref{sec:Theoretical Foundations Relational Database} "Theoretical Foundations" of relational databases as a classical graph.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.60]{dependency_graph}
+	\caption[Package Versions and Dependencies as Graph]{Package Versions and Dependencies as Graph}
+	\label{fig:PackageVersionsAndDependenciesGraph}
+\end{figure}
+
+Neo4j defines its own SQL inspired language called \emph{cypher}. To answer the respective question "Which Package Version does the spring-context:1.2.12 Package Version depend on?" in Neo4j, the following cypher query would have to be used:
+
+\begin{lstlisting}[caption=Package Version Dependencies (including transitive), captionpos=b, label=lst:CypherTransitive]
+MATCH (p1:PACKAGE_VERSION {Name:"spring-context",Version:"1.2.12"})
+MATCH (p2:PACKAGE_VERSION)
+WHERE (p1)-[:DEPENDS_ON*1..]->(p2)
+RETURN (p2)
+\end{lstlisting}
+
+The first line in listing \ref{lst:CypherTransitive} matches the node with the \emph{label} \lstinline|PACKAGE_VERSION| and the key-value-pairs \lstinline|Name: "spring-context"| and \lstinline|Version: "1.2.12"| and assigns the resulting nodes, or in this example rather node as there is just a single one that fulfills this pattern, to the variable \lstinline|p1|. The second line and third line matches all nodes with the \emph{label} \lstinline|PACKAGE_VERSION| that \lstinline|p1| depends on. Thus, the \lstinline|WHERE| uses a path as a predicate. Thereby, \lstinline|DEPENDS_ON| specifies the \emph{label} of the relationship and the part after the asterisk specifies the minimum and maximum amounts of hops between the nodes. In this case, the minimum is 1 because otherwise it would consider itself and as there is no explicit maximum given, it defaults to infinite, to consider all transitive dependencies. The nodes that fulfill this criteria are assigned to \lstinline|p2| and returned. In this case, \emph{java-jdk 1.3.1} and \emph{spring-core 2.1.4}.\par 
+Assuming there is a composite index on \emph{Name} and \emph{Version}, the initial look up of the node has a time complexity of $O(log(n))$ with $n$ being the number of all nodes with the label \emph{PACKAGE\_VERSION} \cite{neo4j}. The consecutive look ups then have a time complexity of $O(m)$ with $m$ being the number of nodes found during the previous look up. Thus, depending on the number of hops, the general time complexity for such a relationship traversal query may be estimated as 
+$$O(log(n)) + O(m) + ... + O(m)$$
+
+So theoretically, the graph database performs and scales significantly better than the relational database for this kind of queries. Besides, the query is definitely simpler to read and understand than the SQL query involving Common Table Expressions. Although, SQL it is arguably still easier to learn the Common Table Expression than learning an entire new query language.\par 
+Now just for completion, to answer the reciprocal question "Which Package Versions depend on the spring-context:1.2.12 Package Version?", the following cypher query would have to be used:
+
+\begin{lstlisting}[caption=Package Version Reciprocal Dependencies (including transitive), captionpos=b, label=lst:CypherReciprocalTransitive]
+MATCH (p1:PACKAGE_VERSION {Name:"spring-context",Version:"1.2.12"})
+MATCH (p2:PACKAGE_VERSION)
+WHERE (p1)<-[:DEPENDS_ON*1..]-(p2)
+RETURN (p2)
+\end{lstlisting}
+
+The only difference in this query is the reversed direction of the relationship in line 3. In this case, it return \emph{log4j 1.5.2} and \emph{spring-boot 1.15.3}. The respective cypher statements to set up the sample data are included in appendix \ref{apx:Data Definition Statement for Neo4J Sample Data}.\par
+Besides the efficient traversal of relationship with rather simple queries, there are some other aspects to consider with graph databases. Generally, most graph databases support transactions with \emph{ACID compliance} \cite{neo4jtransactions, arangodbtransactions}. Also, there are some mechanisms to support \emph{referential integrity}, but those do not work exactly as in relational databases. So, in graph databases there is no way to create a relationship to or from a node that does not exist. Furthermore, nodes cannot be deleted as long as relationships to or from that node exist. But compared to relational databases, there is no option to cascade a delete \cite{neo4jdelete}.\par
+Regarding \emph{schemas}, or the general storage model, different graph databases vary. Neo4j, for example, only supports key-value properties on nodes or relationships. This is considered as single model graph database. In contrast, in ArangoDB every node is a JSON document, which is considered as multi model graph database \cite{arangodbdocuments}. Therefore, Neo4j does not really have a classical schema. But is still offers several types of constraints such as \emph{unique node property constraints}, \emph{node property existence constraints} and \emph{relationship property existence constraints} to enforce a specific data model \cite{neo4jconstraints}. Similar to MongoDB, for ArangoDB a schema may be enforced on application level \cite{arangodbschema}.
+
+\subsection{Database Selection}
+So, a conclusion of the this analysis of the suitability of database technologies for a central metadata store.\par 
+\emph{Relational databases} are a solid choice. As shown in the corresponding suitability section, modern SQL provides all features necessary to conveniently implement the required functionality. But the computational complexity of joins is 
+$$O(log(n)) + O(m*log(n)) + ... + O(m*log(n))$$
+As traversing relationships is involved in the prospectively most frequently used queries, this is a quite important measure.\par 
+\emph{Document databases} are not the technology for this application. As it does not allow for significant de-normalization since the access patterns are versatile, the document database does not have an advantage over a relational database.\par 
+\emph{Graph databases} are optimized for relationship traversal. The previous section has also shown that the cypher queries are simple in comparison to SQL. Due to its purpose, its computational complexity of traversing relationships is better than with relational databases
+$$O(log(n)) + O(m) + ... + O(m)$$
+So, the graph database seems to be the theoretically best database technology for this application. In practice, it also has to be considered, that the application has to be supported and there is less experience around graph databases. This also increases the chances of unforeseen queries or other situation, where the graph database may be a problem.\par 
+For the scope of this work, the graph database is chosen for the implementation to further evaluate its suitability and practicality.\\\\
+The concrete graph database solutions considered were primarily Neo4j and ArangoDB. Neo4j because it has an open source community edition, good documentation and a supportive community. ArangoDB mainly because it is multi model and therefore enables storing JSON, which offers greater flexibility.\par 
+Finally, Neo4j was chosen as it seemed to be the better fit over all. Even in the situations where JSON has to be stored, it is rarely necessary to traverse into the document structure. So it is usually sufficient to access the JSON document by its key which may also be done in Neo4j.  
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ 
 
 
 \section{API}
