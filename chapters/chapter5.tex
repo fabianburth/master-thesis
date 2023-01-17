@@ -60,7 +60,7 @@ So, by fulfilling this functional requirements, the Security and Compliance Data
 \subsection{Non-functional Requirements} \label{sec:Non-functional Requirements}
 Since this shall be a prototypical implementation, there is a strong focus on fulfilling the functional requirements. Thus, no concrete limits regarding performance or scalability such as a maximum response time of 5 seconds or support for up to 1000 concurrent users are set here. Considering the novelty of the topic, there is very few reference data and therefore, such specifications would be premature. However, for a central metadata store which may prospectively power dashboard web applications for monitoring purposes, scalability and performance definitely have to be considered in design decisions already.
 
-\section{Data Model}
+\section{Data Model} \label{sec:Data Model}
 The basic entities relevant in the software supply chain are artifacts, thus sources and resources, and the packages comprising these artifacts. The definition of sources and resources is still the same as introduced in the previous chapter. Resources are capable of doing something and are usually executables or OCI Images. Sources are the code the resources are built from. Compliance scanners usually scan entire source code repositories or binaries. Through different methodologies, these tools detect the packages contained in these scanned artifacts on a best effort basis. In the context of this work, a package is defined as functional unit contained in artifacts, whereby it is usually a collection of files forming a library which is imported in the source code. By subsequently matching these packages against different databases such as the NVD, introduced in section \ref{sec:Vulnerability Management} "Vulnerability Management", known vulnerabilities and licenses are identified. To give a better idea of these results, figure \ref{fig:bdbaResult} in the appendix shows a snippet returned from the API of BDBA. The results on their own are useful already and provide interesting data about the above mentioned entities. But it is still loose metadata that lacks context information such as which deployments contain the corresponding entities. Therefore, an additional entity type to conduct further grouping is required. The OCM already introduced such an entity type, the component.\par
 To conclude this, from a high level perspective, the important entities are \emph{components}, \emph{sources}, \emph{resources}, \emph{packages} and the information attached to these entities such as vulnerabilities and licenses. To generalize this and abstract away from specific data sources, the entity type representing these types of metadata is called \emph{info snippet}. So these entity types are the basic building blocks for the data model. From here on, it is getting rather complex and abstract. To still keep the explanations tangible, below figure \ref{fig:DataModel} already shows an \emph{entity-relationship model (ERM)} describing the final and universal data model. This may be used as a reference point throughout the following paragraphs, discussing the design decisions leading up to the specific entities, relationships and cardinalities.
 
@@ -84,7 +84,7 @@ Since \emph{Artifacts} are comprised of \emph{Package Versions} and the same \em
 The relationship between \emph{Package} and \emph{Package Version} is again similar to the relationship between \emph{Component} and \emph{Component Versions}. But as already explained \emph{packages} are broken down even further into three different entity types and thereby three aggregate levels. Since several data sources may provide different representations, thus different \emph{Native Package Versions}, of the same \emph{Package Version}, the cardinality of this relationship is (1:n). \emph{Package Versions} frequently \emph{depend on} other \emph{Package Versions} and so on. This may lead to quite long chains of dependencies. This has to be kept in mind as these transitive dependencies are also relevant when trying to answer the question, whether a certain \emph{Artifact} or \emph{Component} contains a specific \emph{Package} such as Log4J, and its corresponding vulnerabilities.\par
 Finally there is the \emph{Info Snippet} class of entity types. As explained above, different \emph{Info Snippet} entity types may have relationships to different entity types with different cardinalities.
 
-\subsection{Insights into the Development Process}
+\subsection{Insights into the Development Process} \label{sec:Insights into the Development Process}
 At this point, some insight into the development process may be beneficial to understand this design decisions. The scope of this central data store was initially much narrower. The first PoC was actually strictly bound to the OCM. Therefore, the data model predefined the properties of \emph{component} and \emph{artifact} entity types. As it was bound to the OCM, there was no issue in doing so. But the data model also predefined the properties of the \emph{package} entity types. In fact, the third aggregate level for \emph{packages}, \emph{Native Package Version} did not exist at all. Instead, the \emph{Package Version} entity type had a set of properties that was hoped to be common and harmonizable throughout all prospective data sources. At this time, the application was also tailored to only having scanning tools as data sources. Therefore, to define this set of properties, the API documentations of different scanning tools were analyzed for the common and most important properties, especially the ones of BDBA and Mend \cite{MendAPI}. Additionally, to get a better understanding, both scanners were used on some artifacts to get some sample data. Then, the provided attributes were narrowed down and some interviews with developers were conducted. A huge effort was made here, as this was such an important decision. Also, instead of having the \emph{Info Snippet} class of entity types, there was only a \emph{Vulnerability} and a \emph{License} entity type whose set of properties was defined in the same process. Besides the fact that there was already a substantial amount of disagreement between different developers which properties were actually required, by the time the PoC was finished, several new use cases were discovered that required additional properties and even entire additional entities to provide other information than about vulnerabilities or licenses.\par
 This led to a change in perspective, interpreting the task of defining the right entity types with the right properties rather as a task to make the entire application extensible regarding the respective entity types and properties. But this flexibility and extensibility comes at the cost of a highly increased overall complexity. Apart from remodeling the data model, it also required a completely new architecture and completely different implementation. Thus, only after that, the scope widened drastically, also allowing other component models. Consequently, as a kind of disclaimer, the design process presented here is not exactly as chronological as it may initially seem, since it hides a complete development iteration leading up to the final concepts.
 
@@ -401,7 +401,7 @@ In practice with business data, the source set and the destination set are usual
 \begin{figure}[H]
 	\centering
 	\includegraphics[scale=0.70]{table_vs_graph}
-	\caption[graph representations]{Graph Representations}
+	\caption[graph representations]{Graph Representations \source{Own Representation}}
 	\label{fig:GraphTheoryExample}
 \end{figure}
 
@@ -412,7 +412,7 @@ The first part approached the topic from a mathematical perspective. From here o
 \begin{figure}[H]
 	\centering
 	\includegraphics[scale=0.60]{graphdb}
-	\caption[Graph Database Representation]{Graph Database Representation}
+	\caption[Graph Database Representation]{Graph Database Representation \source{Own Representation}}
 	\label{fig:GraphDBExample}
 \end{figure}
 
@@ -441,7 +441,7 @@ This suitability section takes a similar approach as the first one evaluating th
 \begin{figure}[H]
 	\centering
 	\includegraphics[scale=0.60]{dependency_graph}
-	\caption[Package Versions and Dependencies as Graph]{Package Versions and Dependencies as Graph}
+	\caption[Package Versions and Dependencies as Graph]{Package Versions and Dependencies as Graph \source{Own Representation}}
 	\label{fig:PackageVersionsAndDependenciesGraph}
 \end{figure}
 
@@ -484,18 +484,289 @@ So, the graph database seems to be the theoretically best database technology fo
 \emph{For the scope of this work, the graph database is chosen for the implementation to further evaluate its suitability and practicality.}\\
 
 The concrete graph database solutions considered were primarily Neo4j and ArangoDB. Neo4j because it has an open source community edition, good documentation and a supportive community. ArangoDB mainly because it is multi model and therefore enables storing JSON, which offers greater flexibility.\par 
-Finally, Neo4j was chosen as it seemed to be the better fit over all. Even in the situations where JSON has to be stored, it is rarely necessary to traverse into the document structure. So it is usually sufficient to access the JSON document by its key which may also be done in Neo4j. 
+Finally, Neo4j was chosen as it seemed to be the better fit over all. Even in the situations where JSON has to be stored, it is rarely necessary to traverse into the document structure. So it is usually sufficient to access the JSON document by its key which may also be done in Neo4j.
+
+\section{Application Architecture}
+To further discuss the application and the other important design decisions involved, especially concerning the API, a rough understanding of how the application is composed may be helpful. Thus, the below figure \ref{fig:ApplicationArchitecture} illustrates the application's architecture. 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.45]{application_architecture}
+	\caption[Application Architecture]{Application Architecture \source{Own Representation}}
+	\label{fig:ApplicationArchitecture}
+\end{figure}
+
+This section only provides an overview of the application. The following \emph{API} and \emph{Implementation} sections cover further details.\par
+The application shall be independent of a specific component model and also open to a variety of data sources. To provide this flexibility and extensibility, the application's data model has to be configurable at runtime. This configurability is offered through the \emph{Types API}, which allows the application administrator to define and adjust the data model to a specific use case. Therefore, \emph{OpenAPI} schemata of entity types have to be sent to an entity type specific endpoint of the \emph{Types API}. These OpenAPI schemata are then validated by the \emph{Validation Service}. Finally, the \emph{Types Service} stores the schemata in the database. Through this \emph{Types API}, the administrator is also able to retrieve existing schemata.\par
+As shown in the figure, the \emph{Types Service} is the central service to store and retrieve schemata from the database. Correspondingly, the \emph{Data Lake Service} is the central service to store and retrieve application data. To make the application rather persistence agnostic, thus, to make it easy to exchange the underlying database, the services' interaction with the database is performed through a \emph{Repository}.\par 
+To enforce the data model configured by the administrator, the \emph{Consumption API Schema Assembly Service} retrieves the entity type schemata through the \emph{Types Service} and assembles them to a complete \emph{Consumption API Schema}. This \emph{Consumption API Schema} is then also stored in the database.\par
+The entire \emph{Consumption API} is based on this dynamically, at runtime, constructed schema. Thus, the \emph{Validation Service} validates every entity to be stored against this schema, before it is passed on for further processing. The \emph{Consumption API} exposes only a single endpoint instead of endpoints for each entity type. This makes the upload easier and more flexible from the adapter perspective, as it does not have to be routed to a specific endpoint. Furthermore, considering future performance optimizations, this allows sending larger chunks of data at once.\par
+As the entities of different entity types still have to be processed differently, the \emph{Consumption MUX} identifies the type of each entity contained in a request and routes it to the respective \emph{Data Lake Service} function.\par 
+Finally, in order to being able to query the stored data based on the data model, the \emph{GraphQL Service} constructs a \emph{GraphQL} schema based on the \emph{OpenAPI} schemata of the entity types. The \emph{Query API} therefore also only exposes a single \emph{GraphQL} endpoints. The queries against this endpoints, thus, against the dynamically constructed \emph{GraphQL} schema, are resolved by corresponding functions of the \emph{Data Lake Service}.\\
+
+The application architecture is essentially a \emph{layered architecture}. In the traditional sense of a the three principle layers, the \emph{APIs} represent the application logic in above figure. Thus, the \emph{APIs} receive HTTP requests, interpret these requests into actions upon the \emph{domain layer} and return information to the user in form of a HTTP responses \cite{AppArchitecture}.\par
+The \emph{Validation Service}, \emph{Types Service}, \emph{Consumption API Schema Assembly Service}, \emph{GraphQL Service}, \emph{Consumption MUX} and \emph{Data Lake Service} are on the \emph{domain logic layer}. Thus, these services validate data that comes in from the \emph{presentation} and perform tasks based on inputs and stored data \cite{AppArchitecture}.\par
+Finally, the \emph{Repository} is on the \emph{data source logic layer} as it is responsible for communicating with the database, to carry out tasks on behalf of the application \cite{AppArchitecture}.\par
+Beyond that, these services are layered even further, as the services further left, thus, service on a higher layer, uses functionality provided by services further right (relative to themselves), thus, services on a lower layer. But the lower layer services are unaware of the higher level services \cite{AppArchitecture}.
+
+
+\subsection{Types API \& Services}
+As explained in the overview, every \emph{service} of the application somehow builds on the schemata which may be created through the \emph{Types Service} and \emph{API}. Thus, the rationale behind this service, as well as the design decisions involved, are discussed first.\par
+
+\subsubsection{Schema}
+As the whole complexity of the architecture kind of revolves around the dynamically configurable \emph{schemata}, a common question especially considering the \emph{schema less} database may be, why the application requires such rigid complete schemata?\par
+So, the term \emph{schema less} often leads to the misconception, that the data somehow does not need to abide to any schema. Technically, this is true for most databases attributed with the term schema less, like Neo4j. So the database will allow storing any key-value pairs. The problem is, without prior knowledge about the keys, the data cannot be retrieved. And without prior knowledge about the data types, the data may hardly be aggregated. Thus, even with \emph{schema less} databases, \emph{partial schemata} are enforced in most use cases.\par
+In this context, \emph{partial schema} usually means that the application requires a specific pre-defined set of properties with particular data types. But the application is not limited to those properties. Therefore, a set of unspecified properties may be stored alongside the data defined by a schema. Such \emph{partial schemata} may be enforced by the database through constraints or by the application through frameworks, libraries and standards like \emph{JSON Schema} \cite{JsonSchema}.\\
+
+There is a rather simple reason, why this approach to flexibility and extensibility is not sufficient for this application. The data, thus the entities, are provided by other systems based on policies. Looking back at section \ref{sec:Integration of the Security and Compliance Data Lake into the SAP Gardener Landscape} "Integration of the Security and Compliance Data Lake", the component model data may be fetched from a component repository once a day. Correspondingly, the artifact composition data, thus the packages contained in an artifact, may also be fetched from scanning tool once a day.\par 
+To determine whether an entity such as a component or package already exist in the database, the application has to know the identity of the respective entity. But different component models may identify components by different sets of properties. Different scanning tools may identify packages by different sets of properties. Furthermore, different \emph{Info Snippets} such as vulnerabilities and license are quite unlikely to be identified by the same set of properties. Therefore, it is also impossible to pre-define even a \emph{partial schema}.\par 
+Even the dynamically configurable schemata are implemented to be complete. So, the application does not really leverage the flexibility of using a \emph{schema less} database. This is because allowing properties that are not defined by the schema often leads to a decreased data quality as it entices to just store everything. Since properties not included in the schema are also rarely used in queries, they also do not add value.\par 
+Besides, the real value provided by the application is the queryability of software composition. In the rare occasions where some information may be actually missing, it is easy to manually look it up in the original data source.
+
+\subsubsection{Meta Data Model}
+Providing simple \emph{OpenAPI schemata} would not be sufficient. A common \emph{OpenAPI component schema} enables to define objects with a set of properties. Thereby, it may also be specified what data type these properties have and whether they are required \cite{OpenAPISpec}. While such a specification is enough for validation purposes, it lacks the information which properties are part of the entity types identity.\par 
+To solve this problem, the \emph{Types API} enforces a \emph{Meta Data Model}, which defines \emph{schemata} for the \emph{entity type schemata}. Below listing \ref{lst:EntityTypeSchemaSchema} shows the YAML representation of the \emph{Component Type} schema.
+
+\begin{lstlisting}[basicstyle=\tiny, caption=Entity Type Schema Schema, captionpos=b, label=lst:EntityTypeSchemaSchema]
+ComponentType:
+  type: object
+  required:
+  - kind
+  - version
+  - name
+  - identity_schema
+  - attributes_schema
+  properties:
+    kind: 
+      type: string
+    version:
+      type: string
+    name:
+      type: string
+    identity_schema:
+      type: object
+    attributes_schema:
+      type: object
+\end{lstlisting}
+
+Thus, the \emph{entity type schemata} have to have a \emph{kind}, \emph{version}, \emph{name} and especially an \emph{identity\_schema} and an \emph{attributes\_schema} property. As the name suggests, the \emph{identity\_schema} and the \emph{attributes\_schema} of type object are themselves again \emph{schemata}. The \emph{identity\_schema} thereby defines all the properties comprising the identity of the entity and the \emph{attributes\_schema} specifies all other properties. As this is very abstract and meta level, below listing shows an exemplary JSON representation of a request body of a request to create a \emph{Component Version} schema. 
+
+\begin{lstlisting}[basicstyle=\tiny, caption=Request Body for Component Version Schema Creation, captionpos=b, label=lst:ComponentVersionSchemaCreation]
+{
+  "kind": "ComponentType",
+  "version": "v1alpha1",
+  "name": "Component",
+  "identity_schema": {
+    "type": "object",
+    "required": [
+      "name",
+      "version"
+    ],
+    "properties": {
+      "name": {
+        "type": "string",
+        "maxLength": 255
+      },
+      "version": {
+        "type": "string"
+      }
+    }
+  },
+  "attributes_schema": {
+    "type": "object",
+    "properties": {
+      "labels": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "name",
+            "value"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+            },
+            "value": {}
+          }
+        }  
+      }
+    }
+  }
+}
+\end{lstlisting}
+
+So the \emph{identity} of this \emph{Component Version} entity type is comprised of a \emph{name} property of type string and a maximum length of 255 characters and \emph{version} property also of type string with no further restriction. Both of these properties are required. The only further property in this example is \emph{labels}, which is an array of objects with a required \emph{name} property of type string and a \emph{value} property of any type. Thus, these array may hold arbitrarily nested JSON objects.\par 
+The other properties provided in this request, so \emph{kind}, \emph{version} and \emph{name} are not part of the entity types schema. These properties are used for processing logic.\par \emph{kind} describes the \emph{class of entity types}. Based on the data model defined in the section \ref{sec:Data Model}, this is necessary for \emph{Native Package Version} and \emph{Info Snippet} where multiple entity types of the same class of entity types, thus, \emph{kind}, may be created. In order to have uniform schemata but also especially for extensibility reasons, this property is required to be included with all entity type schemata. This way, the application could be easily extended to store multiple component models.\par 
+\emph{version} describes the version of the particular entity type schema. This property theoretically provides the possibility to update the entity type schema in case an additional property is required. But currently, the application does not provide any functionality to support such version upgrades by automatically updating the existing entities of that entity type.\par 
+\emph{name} is the actual name of the entity type. Thereby, every node of that entity type will be labeled with this name (correspondingly, in a relational database, this would make up the name of the table). Thus, the \emph{name} is required when querying for nodes of that entity type in the database.\\
+
+Currently, these schemata can only be provided for the lowest aggregation level entity types, or rather classes of entity types. Looking back at the data model in figure \ref{fig:DataModel}, this means only the schemata of \emph{Component Version}, \emph{Resource Version}, \emph{Source Version}, \emph{Native Package Version} and \emph{Info Snippets} may be defined.\par 
+This is because these are the types of entities that are actually provided by the component model and data sources, thus the types of entities that are actually consumed. The higher aggregation level entities are rather abstract groupings of those entities, thus, aggregations. As discussed in the data model section, these entities therefore mostly store information that has to be manually created by the user such as \emph{triage policies} or information that is merged from lower level entities such as the common properties of \emph{Native Package Versions} in \emph{Package Versions}. Furthermore, especially their identities depend on the lower level entity's identity.\par
+For example, the identity of a \emph{Component} is equal to the identity of a \emph{Component Version} without considering the version property. Similarly for all other entities with a corresponding relationship. Therefore, although this unfortunately is and cannot be represented in the OpenAPI schema of the entity types schema, the application enforces all the entity type's \emph{identity\_schemas} but \emph{Info Snippet} to provide a \emph{version} property. The higher aggregation entity types are then created implicitly with the respective identity.\par 
+The \emph{Consumption API Schema Assembly Service} which builds the whole \emph{Consumption API} schema retrieves the created schemata of these lowest level entity types and assembles \emph{identity\_schema} and \emph{attributes\_schema} to a single component schema for the entity type as shown in the listing below.
+
+\begin{lstlisting}[basicstyle=\tiny, caption=Component Version Schema, captionpos=b, label=lst:ComponentVersionSchema]
+"Component.v1alpha1": {
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["kind", "type", "version"],
+      "properties": {
+      	"kind": {
+      	  "type": "string",
+      	  "pattern": "^ComponentType$"
+      	},
+        "type": {
+          "type": "string",
+          "pattern": "^Component$"
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "required": ["name","version"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
+    "attributes": {
+      "type": "object",
+      "properties": {
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "value"],
+            "properties": {
+              "name": {
+                "type": "string",
+               },
+              "value": {}
+            }
+          }  
+        } 
+      }
+    }
+  }
+}
+\end{lstlisting}
+
+So, this is the schema against which entities of type \emph{Component Version} that shall be created through the \emph{Consumption API} are validated. The \emph{metadata} properties are needed by the \emph{Consumption MUX} in order to route the entity to the appropriate \emph{Data Lake Service} function.\\
+
+This schema creation is almost identical for all entity types, or rather classes of entity types, except for \emph{Native Package Version}. As common properties of different \emph{Native Package Version}, for example BDBA and Mend, shall be merged on the \emph{Package Version} aggregation level, all \emph{Native Package Versions} have to share this set of common properties. Therefore, this creation process is slightly more modular, as will be shown in the next section discussing the endpoints.
+
+\subsubsection{Endpoints}
+The \emph{Types API} exposes the following HTTP endpoints:
+
+\begin{lstlisting}[caption=Types API Endpoints, captionpos=b, label=lst:TypesEndpoints]
+/types/component
+
+/types/resource
+
+/types/source
+
+/types/info-snippets
+
+/types/packages
+/types/package-identity
+/types/package-attributes
+/types/package-native-attributes
+\end{lstlisting}
+
+Each endpoint accepts HTTP POST, PUT, GET and DELETE requests\footnote{The current version of the application at the time of writing the thesis actually just supports POST requests to those endpoints to create the schemata. It is planned to extend this to also support GET request to retrieve the respective schemata and also PUT and DELETE requests to edit accidental mistakes in newly created schemata that are not used yet.} for managing one \emph{kind} of schemata, the \lstinline|/types/component| endpoint for \emph{Component Version} schemata, the \lstinline|/types/resource| endpoint for \emph{Resource Version} schemata, the \lstinline|/types/source| for \emph{Source Version} schemata, the \lstinline|/types/info-snippets| for \emph{Info Snippets} schemata and the other four endpoints for \emph{Native Package Version} schemata.\par
+As indicated in the previous section, the creation process of the \emph{Native Package Version} schemata is similar to the \emph{Component Version} example, but more modular. Therefore, the \emph{identity\_schema} and the \emph{attributes\_schema} have to be created in separate requests. Moreover, the \emph{attributes\_schema} is further broken down into \emph{attributes} and \emph{native attributes}, where \emph{attributes} is the set of properties that may be merged in the corresponding \emph{Package Version} entity. The individual schemata are then tied together by a request to the \lstinline|/types/packages| endpoint, referencing the respective schemata \emph{identity}, \emph{attributes} and \emph{native attributes schemata}.\\
+
+Finally, an open question may be, why even expose multiple endpoints? Especially considering that the \emph{kind} is present in the request anyway, as shown in listing \ref{lst:ComponentVersionSchemaCreation}. Thus, the further routing could also be handled by a custom multiplexer evaluating that property.\par
+The primary reason that such an approach is taken for the \emph{Consumption API}, as mentioned in the brief architecture overview, but not for this \emph{Types API} is that they are used entirely differently.\par
+The \emph{Consumption API} only has to \emph{consume} huge amounts of data that are provided by other systems. The \emph{Types API} is used by an human administrator to configure the application by \emph{creating}, \emph{reading} and in edge cases also \emph{updating} and \emph{deleting} schemata. Also, this is probably done only a few times during the entire application life time. Therefore, considering the entity type schemata as REST-like resources and exposing corresponding endpoints allows to leverage the intuitiveness of an API leveraging the common HTTP verbs without any real disadvantages.\\
+
+Besides, there is another inconvenience with APIs that expose only a single endpoints which enables to submit multiple different entity types in a single request.\par 
+OpenAPI has a construct called "oneOf" which allows to specify that all entities in the request have to fulfill exactly \emph{one of} a specified set of schemata. Thus, generally OpenAPI supports specifying that kind of endpoint. The problem is, validation functions provided by OpenAPI libraries in any programming cannot produce helpful error messages for that kind of endpoint when trying to validate the whole request.\par 
+Imagine a request contains multiple entities. One of them is faulty. Now, the general validation function does not know what kind of entity this is supposed to be, thus, against which specific schema it has to be validated. It only knows that this faulty entity does not fulfill any of the provided schemata.\par
+Therefore, in order to get helpful error messages, the validation would have to be implemented at a later point, evaluating the \emph{kind} property and calling the validation function individually for each entity in the request with the corresponding schema. But this is more of an implementation detail.
+
+\subsection{Consumption API \& Services}
+The \emph{Consumption API} is fairly simple, once the \emph{Types API \& Services} are understood. It exposes a single endpoint:
+
+\begin{lstlisting}[caption=Consumption API Endpoint, captionpos=b, label=lst:ConsumptionEndpoint]
+/datalake
+\end{lstlisting}
+
+This endpoints only accepts HTTP PUT requests, as the respective operation performed by the application is merging, or in the SQL context rather called \emph{upsert}, of the respective entities. The request is validated against the \emph{Consumption API Schema} assembled by the \emph{Consumption API Schema Assembly Service}.\par 
+As mentioned before, a REST-like API similar to the \emph{Types API} would not add much value here. The API has to consume huge amounts of data provided by other systems. Thus, the API would not make use of the HTTP verbs anyway. Furthermore, multiple endpoints would result in additional unnecessary requests. A single endpoint, on the other hand, makes the implementation of the adapters easier and entities in a request may be bundled more flexibly.\\
+
+When coming from 
+
+
+\subsection{Query API \& Services}
+
+
+\subsection{Evaluation}
+Hiding complexity from the user
+triaging (schemas for relationships)
+triage policies
+further properties
+
+
+
+
+
+
+
+
+
+ 
+
+
 
 \section{API}
-In the data model section, it is mentioned several times that the properties of the entities as well as several entities cannot be known upfront.\par
-As a quick revision, the reason therefore were that the Security and Compliance Data Lake shall be independent of a specific component model and also open to a variety of data sources. This is also specified in requirement R.1. Therefore, the data model in figure \ref{fig:DataModel} omitted properties and defined classes of entity types.\par
-When the data model is applied to a specific component model and to a specific set of data sources, instances of the classes of entity types are defined. In figure \ref{fig:RefDataModel} illustrating an application of the data model, the respective component model is the \emph{Open Component Model}, \emph{BDBA Package Version} is defined as an instance of \emph{Native Package Version} and \emph{Vulnerability} is defined as an instance of \emph{Info Snippet}. To provide this flexibility and extensibility, the application's data model has to be configurable at runtime.\footnote{Since in Neo4j each node and relationships stores key-value pairs and does not require a schema,  an initial idea may be to loosen the data model, provide the data received from the different data sources in the adapters with a \emph{label} declaring their respective entity type and then forward it to the data lake, where the top level properties are stored. Without going into detail, the problem with such a rather \emph{schema less} approach is that the data quality may be bad and there is no reliable way to merge or even query the data, as the keys of the properties are entirely up to the data sources. Actually, in order to even know the names of properties, the component model or data sources would have to be inspected.}
+In the data model section, it is mentioned several times that the properties of the entities as well as several entities cannot be known upfront. As a quick revision, the reasons therefore were that the Security and Compliance Data Lake shall be independent of a specific component model and also open to a variety of data sources. This is also specified in requirement R.1. Thus, the data model in figure \ref{fig:DataModel} omitted properties and defined classes of entity types.\par
+When the data model is applied to a specific component model and to a specific set of data sources, instances of the classes of entity types are defined. In figure \ref{fig:RefDataModel} illustrating an application of the data model, the respective component model is the \emph{Open Component Model}, \emph{BDBA Package Version} is defined as an instance of \emph{Native Package Version} and \emph{Vulnerability} is defined as an instance of \emph{Info Snippet}. To provide this flexibility and extensibility, the application's data model has to be configurable at runtime.\footnote{Since in Neo4j each node and relationships stores key-value pairs and does not require a schema,  an initial idea may be to loosen the data model, provide the data received from the different data sources in the adapters with a \emph{label} declaring their respective entity type and then forward it to the data lake, where the top level properties are stored. Without going into detail, the problem with such a rather \emph{schema less} approach is that the data quality may be bad and there is no reliable way to merge or even query the data, as the keys of the properties are entirely up to the data sources. Actually, in order to even know the names of properties, the component model or data sources would have to be inspected.}\par 
+This configurability is offered through a \emph{Types API}, which allows the application administrator to define and adjust the data model to the specific use case.\par
+Besides, the application exposes two further APIs. A \emph{Consumption API} to validate and store the data received from the adapters. And, of course, a \emph{Query API} to access and analyze the data stored in the graph.\par 
+The design of these different APIs is explained in detail throughout the following sections. 
 
-\subsection{Type Service API}
+\subsection{Types API}
+The \emph{Types API} exposes the following HTTP endpoints:
 
-\subsection{Consumption Service API}
+\begin{lstlisting}[caption=Types API Endpoints, captionpos=b, label=lst:TypesAPI]
+/types/component
 
-\subsection{Query Service API}
+/types/resource
+
+/types/source
+
+/types/info-snippets
+
+/types/packages
+/types/package-identity
+/types/package-attributes
+/types/package-native-attributes
+\end{lstlisting}
+Each of these endpoints accepts HTTP POST requests containing an \emph{OpenAPI} schema \cite{OpenAPISpec}.\par
+Simple OpenAPI schemata defining objects would not be sufficient to base the data model upon. To further explain these issues, below shows an exemplary schema. 
+
+
+
+To be precise, the \lstinline|/types/component| endpoint accepts the schema for the \emph{Component Version}, the \lstinline|/types/resource| endpoint for \emph{Resource Version}, the \lstinline|/types/source| endpoint for \emph{Source Version}, \lstinline|info-snippets| endpoints for all kinds of \emph{Info Snippets}.
+
+
+\subsection{Consumption Service \& API}
+
+\subsection{Query Service \& API}
+
+\section{Application Architecture}
 
 
 
