@@ -754,23 +754,47 @@ There is another problem concerning the \emph{queryability} of this REST API. De
 
 So, the REST API would also enable to traverse the graph and intuitively answer the most common questions. Through URL parameters, further filtering of the corresponding result set would also be possible.\\
 
-This deviation of a REST API seemed simple and intuitive, but still powerful. But there is a third problem, \emph{parsing}. In the end, this also lead to the final reason for not pursuing this approach further.\par
-Part of the problem is already visible in the data consumption example. Common routing frameworks and libraries are not able to handle parse URLs such as \lstinline|/components/github.com/gardener/etcd-druid/|, since the slash will always be interpreted as a path separator.\par 
-Intuitively, this could be solved by replacing the slash by a different character such as an underscore. But for this to work properly, the respective character cannot be allowed to use in the name. This would definitely cause compatibility issues with OCM or other component models and the application.\par 
-Another approach is to implement a custom parser.
-requires adjustment of the URL so it always ends with a keyword  \par 
-The problem becomes impossible to solve when considering corresponding endpoints for \emph{Sources} and \emph{Resources}. Using the identity properties of the OCM, respective endpoints would look like this:
+This deviation of a REST API seemed simple and intuitive and still powerful. But there is a third problem, \emph{parsing}. In the end, this also lead to the final reason for not pursuing this approach further.\par
+Part of the problem is already visible in the data consumption example. Common routing frameworks and libraries are not able to handle parse URLs such as \lstinline|/components/github.com/gardener/etcd-druid/| since the slashes in the name will be interpreted as a path separator.\par 
+Intuitively, this could be solved by replacing the slash by a different character such as an underscore. But for this to work properly, the respective character cannot be allowed to be used in the name. This would definitely cause compatibility issues with OCM and other component models.\par 
+Another approach is to implement a custom parser and adjust the URLs to always end on a keyword. For example, the previous URL to retrieve a component with a specific name would have to be changed to something like \lstinline|/components/github.com/| \lstinline|gardener/etcd-druid/list| with \emph{list} being the keyword. Then a custom parser could parse the URL backwards.\par
+But even with URLs always ending on keywords, the parsing may not be unambiguous, as shown by the listing below.
 
-\begin{lstlisting}[basicstyle=\tiny, caption=REST API Source Endpoint, captionpos=b, label=lst:RESTAPISourceEndpoint]
-/sources/{component_name:component_version:source_name:extra_id}/version/...
+\begin{lstlisting}[caption=Ambiguous REST API URL, captionpos=b, label=lst:Ambiguous URL]
+/components/github.com/gardener/etcd-druid/versions/1.2.3/list
 \end{lstlisting}
 
-While this is not really clean, it seems as this may work as long as the character separating the individual properties of the sources' identity, in this example the colon, is guaranteed to not occur within one of the properties. But the per OCM specification, the \emph{extra\_id} is a flat map of an arbitrary number of key-value pairs. As a map as unordered per definition, either the respective keys somehow would have to be included or a mechanism would have to be established to ensure the properties are always in the same order.
+This request could be meant to list all \emph{Component Versions} with \emph{component\_name = github.com/gardener/etcd-druid}. But it could also be meant to list all \emph{Components} with \emph{component\_name = github.com/gardener/etcd-druid/versions/1.2.3}.\par
+The problem becomes even more difficult to deal with when considering corresponding endpoints for \emph{Sources} and \emph{Resources}. Using the identity properties of the OCM, respective endpoints would look like this:
 
-giving the entities ids -> got to find the id first
-hash the identity properties
+\begin{lstlisting}[caption=REST API Source Endpoint, captionpos=b, label=lst:RESTAPISourceEndpoint]
+/sources/{component_name:component_version:source_name:extra_id}
+\end{lstlisting}
 
-Fielding idea of REST (hypermedia as the engine of application state)
+While this is not really clean, it still seems as this may work as long as the character separating the individual properties of the sources' identity, in this example the colon, is guaranteed to not occur within one of the properties. But as previously established, such a separator would lead to compatibility issues. Besides, per OCM specification, the \emph{extra\_id} is a flat map containing an arbitrary number of key-value pairs. Thus, the key-value pairs would have to be included in the URL.\par
+Therefore, it is apparent that there is no clean solution to identifying entities by integrating their dynamically configurable identities into the URL.\\
+
+To solve this parsing issues, assigning additional \emph{surrogate keys}, thus \emph{UUIDs} or \emph{auto incremented IDs}, as it is done in common use cases was considered. But this would require additional requests to find the surrogate key of the respective entity. Thus, the API would have to support request using query parameters as indicated by the listing below.
+
+\begin{lstlisting}[caption=Querying for Entitiy ID, captionpos=b, label=lst:QueryingForEntityID]
+/sources?component_name=github.com/gardener/etcd-druid&version=0.15.0&source_name=etcd&extra_identifier=etcd-druid-source
+
+/sources/{id}/versions
+\end{lstlisting}
+
+The user first sends the first request to retrieve the ID of the respective \emph{Source}. Once the ID is acquired, it may be used to navigate further through the API and, for example, retrieve all versions of the \emph{Source} with that ID.\par
+Although every API that exposes its operations through individual resource endpoint is called REST API today \cite{RichardsonMaturityModel}, this form of usage is already much closer to the original REST architectural style defined by Roy Fielding. It is derived from the web and promotes hypermedia as the engine of application's state \cite{RESTArchitecturalStyle}. Thus, the original idea is that RESTful architectures and consequently also RESTful APIs may be navigated just as websites. So a user may know host address of the API. Sending a GET request to that host address will then return a list hyperlinks of further resources. For this API this may be \lstinline|/components|, \lstinline|/sources|, ... . Again, following one of those hyperlinks by sending a GET request will return another list of hyperlinks of further resources available under the currently selected resource, in the case of \lstinline|/components| a list of hyperlinks to all available individual \emph{Components}. This is great for APIs that have a potentially huge number of unknown users, as it is very intuitive and requires almost no documentation to navigate through, just as the web. But it is not suitable for this kind of application which requires running specific potentially expensive queries based on already known entities.\\
+
+Finally, hashing the identity properties and using the hash as ID was considered. While this would allow to issue the queries directly without having to retrieve the ID first, it would require to calculate the hash. Due to implications regarding normalization, this would require an additional small program in order to being able to use the API. Therefore, this approach also was not pursued further.
+
+\subsubsection{Remote Procedure Calls}
+As the REST API approach was deemed unsuitable after thorough analysis, the next best idea was to implement the most common queries as \emph{Remote Procedure Calls (RPC)}.\par 
+This approach is simple and clean. All properties to specify an entity's identity may be embedded in the request body in a suitable format such as JSON. There would be no issues regarding URL and parsing.\par 
+But compared to the REST API approach, this is not intuitive and requires to know the respective name of the query defined by the application as well as the properties required by that type of query and the respective format in which these properties have to be provided.\par
+Thus, this approach was not satisfying either.
+
+\subsubsection{GraphQL} 
+
 
 
 
