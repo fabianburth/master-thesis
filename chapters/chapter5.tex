@@ -511,21 +511,20 @@ Beyond that, these services are layered even further, as the services further le
 
 
 \subsection{Types API \& Services}
-As explained in the overview, every \emph{service} of the application somehow builds on the schemata which may be created through the \emph{Types Service} and \emph{API}. Thus, the rationale behind this service, as well as the design decisions involved, are discussed first.\par
+As explained in the overview, every \emph{service} of the application somehow builds on the schemata which may be created through the \emph{Types API} and respective \emph{Services}. Thus, the rationale behind this service, as well as the design decisions involved, are discussed first.\par
 
 \subsubsection{Schema}
-As the whole complexity of the architecture kind of revolves around the dynamically configurable \emph{schemata}, a common question especially considering the \emph{schema less} database may be, why the application requires such rigid complete schemata?\par
-So, the term \emph{schema less} often leads to the misconception, that the data somehow does not need to abide to any schema. Technically, this is true for most databases attributed with the term schema less, like Neo4j. So the database will allow storing any key-value pairs. The problem is, without prior knowledge about the keys, the data cannot be retrieved. And without prior knowledge about the data types, the data may hardly be aggregated. Thus, even with \emph{schema less} databases, \emph{partial schemata} are enforced in most use cases.\par
-In this context, \emph{partial schema} usually means that the application requires a specific pre-defined set of properties with particular data types. But the application is not limited to those properties. Therefore, a set of unspecified properties may be stored alongside the data defined by a schema. Such \emph{partial schemata} may be enforced by the database through constraints or by the application through frameworks, libraries and standards like \emph{JSON Schema} \cite{JsonSchema}.\\
+As the whole complexity of the architecture kind of revolves around the dynamically configurable \emph{schemata}, a common question especially considering the \emph{schema less} database may be, why the application even requires such rigid complete schemata?\par
+The term \emph{schema-less} often leads to the misconception that the data somehow does not need to abide to any schema. Technically, this is true for most databases attributed with the term schema less, like Neo4j. So the database will allow storing any key-value pairs. The problem is, without prior knowledge about the keys, the data cannot be retrieved. And without prior knowledge about the data types, the data may hardly be aggregated. Thus, even with schema-less databases, \emph{partial schemata} are enforced in most use cases.\par
+In this context, \emph{partial schema} usually means that the application requires a specific pre-defined set of properties with particular data types. But the application is not limited to those properties. Therefore, a set of unspecified properties may be stored alongside the data defined by a schema. Such \emph{partial schemata} may be enforced by the database through constraints or by the application through frameworks, libraries and standards like \emph{JSON Schema} \cite{JsonSchema} and OpenAPI.\\
 
-There is a rather simple reason, why this approach to flexibility and extensibility is not sufficient for this application. The data, thus the entities, are provided by other systems based on policies. Looking back at section \ref{sec:Integration of the Security and Compliance Data Lake into the SAP Gardener Landscape} "Integration of the Security and Compliance Data Lake", the component model data may be fetched from a component repository once a day. Correspondingly, the artifact composition data, thus the packages contained in an artifact, may also be fetched from scanning tool once a day.\par 
-To determine whether an entity such as a component or package already exist in the database, the application has to know the identity of the respective entity. But different component models may identify components by different sets of properties. Different scanning tools may identify packages by different sets of properties. Furthermore, different \emph{Info Snippets} such as vulnerabilities and license are quite unlikely to be identified by the same set of properties. Therefore, it is also impossible to pre-define even a \emph{partial schema}.\par 
-Even the dynamically configurable schemata are implemented to be complete. So, the application does not really leverage the flexibility of using a \emph{schema less} database. This is because allowing properties that are not defined by the schema often leads to a decreased data quality as it entices to just store everything. Since properties not included in the schema are also rarely used in queries, they also do not add value.\par 
+But there is a rather simple reason, why this approach to flexibility and extensibility is not sufficient for this application. The data, thus the entities, are provided by other systems based on policies. Looking back at section \ref{sec:Integration of the Security and Compliance Data Lake into the SAP Gardener Landscape} "Integration of the Security and Compliance Data Lake", the component model data may be fetched from a component repository once a day. Correspondingly, the artifact composition data, thus the packages contained in an artifact, may also be fetched from scanning tools once a day. To determine whether an entity such as a component or package already exists in the database, the application has to know the identity of the respective entity. But different component models may identify components by different sets of properties. Different scanning tools may identify packages by different sets of properties. Furthermore, different \emph{Info Snippets} such as vulnerabilities and license are quite unlikely to be identified by the same set of properties. Therefore, it is also impossible to pre-define even a \emph{partial schema}.\par 
+The dynamically configurable schemata of this application are even implemented to be complete. So, the application does not really leverage the flexibility of using a schema-less database. This is because allowing properties that are not defined by a schema often leads to a decreased data quality as it entices to just store everything. Since properties not included in the schema are also rarely used in queries, they frequently do not add value.\par 
 Besides, the real value provided by the application is the queryability of software composition. In the rare occasions where some information may be actually missing, it is easy to manually look it up in the original data source.
 
 \subsubsection{Meta Data Model}
-Providing simple \emph{OpenAPI schemata} would not be sufficient. A common \emph{OpenAPI component schema} enables to define objects with a set of properties. Thereby, it may also be specified what data type these properties have and whether they are required \cite{OpenAPISpec}. While such a specification is enough for validation purposes, it lacks the information which properties are part of the entity types identity.\par 
-To solve this problem, the \emph{Types API} enforces a \emph{Meta Data Model}, which defines \emph{schemata} for the \emph{entity type schemata}. Below listing \ref{lst:EntityTypeSchemaSchema} shows the YAML representation of the \emph{Component Type} schema.
+Providing simple \emph{OpenAPI schemata} would not be sufficient. A common \emph{OpenAPI component schema} enables to define objects with a set of properties. Thereby, it may also be specified what data type these properties have and whether they are required \cite{OpenAPISpec}. While such a specification is enough for validation purposes, it lacks the information which properties are part of the entity type's identity.\par 
+To solve this problem, the \emph{Types API} enforces a \emph{Meta Data Model}, which defines \emph{schemata} for the \emph{entity type schemata}. Below listing \ref{lst:EntityTypeSchemaSchema} shows the YAML representation of the \emph{Component Type} schema schema.
 
 \begin{lstlisting}[basicstyle=\tiny, caption=Entity Type Schema Schema, captionpos=b, label=lst:EntityTypeSchemaSchema]
 ComponentType:
@@ -549,7 +548,7 @@ ComponentType:
       type: object
 \end{lstlisting}
 
-Thus, the \emph{entity type schemata} have to have a \emph{kind}, \emph{version}, \emph{name} and especially an \emph{identity\_schema} and an \emph{attributes\_schema} property. As the name suggests, the \emph{identity\_schema} and the \emph{attributes\_schema} of type object are themselves again \emph{schemata}. The \emph{identity\_schema} thereby defines all the properties comprising the identity of the entity and the \emph{attributes\_schema} specifies all other properties. As this is very abstract and meta level, below listing shows an exemplary JSON representation of a request body of a request to create a \emph{Component Version} schema. 
+Thus, the \emph{entity type schemata} have to have a \emph{kind}, \emph{version}, \emph{name} and especially an \emph{identity\_schema} and an \emph{attributes\_schema} property. As the names suggest, the \emph{identity\_schema} and the \emph{attributes\_schema} of type object are themselves again schemata. The \emph{identity\_schema} thereby defines all the properties comprising the identity of the entity and the \emph{attributes\_schema} specifies all other properties. As this is very abstract and meta level, below listing shows an exemplary JSON representation of a request body to create a \emph{Component Version} schema. 
 
 \begin{lstlisting}[basicstyle=\tiny, caption=Request Body for Component Version Schema Creation, captionpos=b, label=lst:ComponentVersionSchemaCreation]
 {
@@ -596,14 +595,14 @@ Thus, the \emph{entity type schemata} have to have a \emph{kind}, \emph{version}
 }
 \end{lstlisting}
 
-So the \emph{identity} of this \emph{Component Version} entity type is comprised of a \emph{name} property of type string and a maximum length of 255 characters and \emph{version} property also of type string with no further restriction. Both of these properties are required. The only further property in this example is \emph{labels}, which is an array of objects with a required \emph{name} property of type string and a \emph{value} property of any type. Thus, these array may hold arbitrarily nested JSON objects.\par 
-The other properties provided in this request, so \emph{kind}, \emph{version} and \emph{name} are not part of the entity types schema. These properties are used for processing logic.\par \emph{kind} describes the \emph{class of entity types}. Based on the data model defined in the section \ref{sec:Data Model}, this is necessary for \emph{Native Package Version} and \emph{Info Snippet} where multiple entity types of the same class of entity types, thus, \emph{kind}, may be created. In order to have uniform schemata but also especially for extensibility reasons, this property is required to be included with all entity type schemata. This way, the application could be easily extended to store multiple component models.\par 
+So the \emph{identity} of this \emph{Component Version} entity type is comprised of a \emph{name} property of type string and a maximum length of 255 characters and \emph{version} property also of type string with no further restriction. Both of these properties are required. The only further property in this example is \emph{labels}, which is an array of objects with a required \emph{name} property of type string and a \emph{value} property of any type. Thus, these array may hold arbitrarily nested objects.\par 
+The other properties provided in this request, so \emph{kind}, \emph{version} and \emph{name} are not part of the entity types schema. These properties are used for processing logic.\par \emph{kind} describes the \emph{class of entity types}. Based on the data model defined in the section \ref{sec:Data Model}, this is necessary for \emph{Native Package Version} and \emph{Info Snippet} where multiple entity types of the same class of entity types, or rather \emph{kind}, may be created. In order to have uniform schemata but also especially for extensibility reasons, this property is required to be included with all entity type schemata. This way, the application could be easily extended to store multiple component models.\par 
 \emph{version} describes the version of the particular entity type schema. This property theoretically provides the possibility to update the entity type schema in case an additional property is required. But currently, the application does not provide any functionality to support such version upgrades by automatically updating the existing entities of that entity type.\par 
 \emph{name} is the actual name of the entity type. Thereby, every node of that entity type will be labeled with this name (correspondingly, in a relational database, this would make up the name of the table). Thus, the \emph{name} is required when querying for nodes of that entity type in the database.\\
 
 Currently, these schemata can only be provided for the lowest aggregation level entity types, or rather classes of entity types. Looking back at the data model in figure \ref{fig:DataModel}, this means only the schemata of \emph{Component Version}, \emph{Resource Version}, \emph{Source Version}, \emph{Native Package Version} and \emph{Info Snippets} may be defined.\par 
-This is because these are the types of entities that are actually provided by the component model and data sources, thus the types of entities that are actually consumed. The higher aggregation level entities are rather abstract groupings of those entities, thus, aggregations. As discussed in the data model section, these entities therefore mostly store information that has to be manually created by the user such as \emph{triage policies} or information that is merged from lower level entities such as the common properties of \emph{Native Package Versions} in \emph{Package Versions}. Furthermore, especially their identities depend on the lower level entity's identity.\par
-For example, the identity of a \emph{Component} is equal to the identity of a \emph{Component Version} without considering the version property. Similarly for all other entities with a corresponding relationship. Therefore, although this unfortunately is and cannot be represented in the OpenAPI schema of the entity types schema, the application enforces all the entity type's \emph{identity\_schemas} but \emph{Info Snippet} to provide a \emph{version} property. The higher aggregation entity types are then created implicitly with the respective identity.\par 
+This is because these are the types of entities that are actually provided by the component model and data sources, thus, the types of entities that are actually consumed. The higher aggregation level entities are rather abstract groupings of those entities, thus, aggregations. As discussed in the data model section, these entities therefore mostly store information that has to be manually created by the user such as \emph{triage policies} or information that is merged from lower level entities such as the common properties of \emph{Native Package Versions} in \emph{Package Versions}. Furthermore, especially their identities depend on the lower level entity's identity.\par
+For example, the identity of a \emph{Component} is equal to the identity of a \emph{Component Version} without considering the version property. Similarly for all other entities with a corresponding relationship. Therefore, although this unfortunately is and cannot be represented in the OpenAPI schema of the entity types schema, the application enforces all the entity type's \emph{identity\_schemas} except the ones' of \emph{Info Snippets} to provide a \emph{version} property. While consuming and storing entities through the \emph{Consumption API}, the higher aggregation level entities are then created implicitly with the respective identity.\par
 The \emph{Consumption API Schema Assembly Service} which builds the whole \emph{Consumption API} schema retrieves the created schemata of these lowest level entity types and assembles \emph{identity\_schema} and \emph{attributes\_schema} to a single component schema for the entity type as shown in the listing below.
 
 \begin{lstlisting}[basicstyle=\tiny, caption=Component Version Schema, captionpos=b, label=lst:ComponentVersionSchema]
@@ -664,12 +663,15 @@ The \emph{Consumption API Schema Assembly Service} which builds the whole \emph{
 
 So, this is the schema against which entities of type \emph{Component Version} that shall be created through the \emph{Consumption API} are validated. The \emph{metadata} properties are needed by the \emph{Consumption MUX} in order to route the entity to the appropriate \emph{Data Lake Service} function.\\
 
-This schema creation is almost identical for all entity types, or rather classes of entity types, except for \emph{Native Package Version}. As common properties of different \emph{Native Package Version}, for example BDBA and Mend, shall be merged on the \emph{Package Version} aggregation level, all \emph{Native Package Versions} have to share this set of common properties. Therefore, this creation process is slightly more modular, as will be shown in the next section discussing the endpoints.
+This schema creation process is almost identical for all entity types, or rather classes of entity types, except for \emph{Native Package Version}. As common properties of different \emph{Native Package Version}, for example of BDBA and Mend, shall be merged on the \emph{Package Version} aggregation level, all \emph{Native Package Versions} have to share this set of common properties. Therefore, this creation process is slightly more modular, as will be shown in the next section discussing the endpoints.\par
+Furthermore, there are currently predefined schemata for the \emph{Relationships} between the entity types. These schemata are all quite similar. They all require a \emph{source}, which refers to the identity of the entity type for which the relationship is outgoing, and a \emph{destination}, which refers to the identity of the entity type for which the relationship is incoming. Therefore, the schema for a \emph{Component Reference}, thus, for a \emph{Component Version to Component Version} relationship requires the identity of a \emph{Component Version} as a \emph{source} and as a \emph{destination}. Correspondingly schema for a \emph{Component Version to Resource Version} relationship requires the identity of a \emph{Component Version} as a \emph{source} and the identity of a \emph{Resource Version} as a destination. This is necessary in order to create the relationships independently of the entities which makes the creation process even more flexible.\par 
+Imagine the each \emph{Component Version} schema also includes references to all related \emph{Component Versions}. As entities, or rather nodes, have to exist before relationships including them may be created, this would require to resolve these dependencies and create a corresponding execution order. While the same may be done with the above approach, it also offers the possibility of creating all entities first and then all relationships. Of course, this comes at the cost of having to send the identities redundantly.\par 
+Besides that, all \emph{Relationship} schemata only have one further property, the \emph{labels} property, which allows arbitrarily nested objects. As mentioned before, Neo4j can store JSON documents. But as each node and relationship only stores key-value pairs, nested properties cannot be leveraged in queries (except for using string comparisons, which is quite inefficient).
 
 \subsubsection{Endpoints}
 The \emph{Types API} exposes the following HTTP endpoints:
 
-\begin{lstlisting}[caption=Types API Endpoints, captionpos=b, label=lst:TypesEndpoints]
+\begin{lstlisting}[basicstyle=\tiny, caption=Types API Endpoints, captionpos=b, label=lst:TypesEndpoints]
 /types/component
 
 /types/resource
@@ -684,7 +686,7 @@ The \emph{Types API} exposes the following HTTP endpoints:
 /types/package-native-attributes
 \end{lstlisting}
 
-Each endpoint accepts HTTP POST, PUT, GET and DELETE requests\footnote{The current version of the application at the time of writing the thesis actually just supports POST requests to those endpoints to create the schemata. It is planned to extend this to also support GET request to retrieve the respective schemata and also PUT and DELETE requests to edit accidental mistakes in newly created schemata that are not used yet.} for managing one \emph{kind} of schemata, the \lstinline|/types/component| endpoint for \emph{Component Version} schemata, the \lstinline|/types/resource| endpoint for \emph{Resource Version} schemata, the \lstinline|/types/source| for \emph{Source Version} schemata, the \lstinline|/types/info-snippets| for \emph{Info Snippets} schemata and the other four endpoints for \emph{Native Package Version} schemata.\par
+Each endpoint accepts HTTP POST, PUT, GET and DELETE requests\footnote{The current version of the application at the time of writing the thesis actually just supports POST requests to those endpoints to create the schemata. But it is planned to extend this to also support GET request to retrieve the respective schemata and also PUT and DELETE requests to edit accidental mistakes in newly created schemata that are not used yet.} for managing one \emph{kind} of schemata, the \lstinline|/types/component| endpoint for \emph{Component Version} schemata, the \lstinline|/types/resource| endpoint for \emph{Resource Version} schemata, the \lstinline|/types/source| for \emph{Source Version} schemata, the \lstinline|/types/info-snippets| for \emph{Info Snippets} schemata and the other four endpoints for \emph{Native Package Version} schemata.\par
 As indicated in the previous section, the creation process of the \emph{Native Package Version} schemata is similar to the \emph{Component Version} example, but more modular. Therefore, the \emph{identity\_schema} and the \emph{attributes\_schema} have to be created in separate requests. Moreover, the \emph{attributes\_schema} is further broken down into \emph{attributes} and \emph{native attributes}, where \emph{attributes} is the set of properties that may be merged in the corresponding \emph{Package Version} entity. The individual schemata are then tied together by a request to the \lstinline|/types/packages| endpoint, referencing the respective schemata \emph{identity}, \emph{attributes} and \emph{native attributes schemata}.\\
 
 Finally, an open question may be, why even expose multiple endpoints? Especially considering that the \emph{kind} is present in the request anyway, as shown in listing \ref{lst:ComponentVersionSchemaCreation}. Thus, the further routing could also be handled by a custom multiplexer evaluating that property.\par
@@ -692,24 +694,90 @@ The primary reason that such an approach is taken for the \emph{Consumption API}
 The \emph{Consumption API} only has to \emph{consume} huge amounts of data that are provided by other systems. The \emph{Types API} is used by an human administrator to configure the application by \emph{creating}, \emph{reading} and in edge cases also \emph{updating} and \emph{deleting} schemata. Also, this is probably done only a few times during the entire application life time. Therefore, considering the entity type schemata as REST-like resources and exposing corresponding endpoints allows to leverage the intuitiveness of an API leveraging the common HTTP verbs without any real disadvantages.\\
 
 Besides, there is another inconvenience with APIs that expose only a single endpoints which enables to submit multiple different entity types in a single request.\par 
-OpenAPI has a construct called "oneOf" which allows to specify that all entities in the request have to fulfill exactly \emph{one of} a specified set of schemata. Thus, generally OpenAPI supports specifying that kind of endpoint. The problem is, validation functions provided by OpenAPI libraries in any programming cannot produce helpful error messages for that kind of endpoint when trying to validate the whole request.\par 
+OpenAPI has a construct called "oneOf" which allows to specify that all entities and relationships in the request have to fulfill exactly \emph{one of} a specified set of schemata. Thus, generally OpenAPI supports specifying that kind of endpoint. The problem is, validation functions provided by OpenAPI libraries in any programming cannot produce helpful error messages for that kind of endpoint when trying to validate the whole request.\par 
 Imagine a request contains multiple entities. One of them is faulty. Now, the general validation function does not know what kind of entity this is supposed to be, thus, against which specific schema it has to be validated. It only knows that this faulty entity does not fulfill any of the provided schemata.\par
 Therefore, in order to get helpful error messages, the validation would have to be implemented at a later point, evaluating the \emph{kind} property and calling the validation function individually for each entity in the request with the corresponding schema. But this is more of an implementation detail.
 
 \subsection{Consumption API \& Services}
-The \emph{Consumption API} is fairly simple, once the \emph{Types API \& Services} are understood. It exposes a single endpoint:
+The \emph{Consumption API} is fairly simple, once the \emph{Types API \& Services} are understood. It exposes a single HTTP endpoint:
 
 \begin{lstlisting}[caption=Consumption API Endpoint, captionpos=b, label=lst:ConsumptionEndpoint]
 /datalake
 \end{lstlisting}
 
-This endpoints only accepts HTTP PUT requests, as the respective operation performed by the application is merging, or in the SQL context rather called \emph{upsert}, of the respective entities. The request is validated against the \emph{Consumption API Schema} assembled by the \emph{Consumption API Schema Assembly Service}.\par 
-As mentioned before, a REST-like API similar to the \emph{Types API} would not add much value here. The API has to consume huge amounts of data provided by other systems. Thus, the API would not make use of the HTTP verbs anyway. Furthermore, multiple endpoints would result in additional unnecessary requests. A single endpoint, on the other hand, makes the implementation of the adapters easier and entities in a request may be bundled more flexibly.\\
-
-When coming from 
-
+This endpoint only accepts HTTP PUT and DELETE requests\footnote{The current version of the application at the time of writing the thesis actually just support PUT requests. But as in production there will likely be cases where some entity or relationship has to be removed, it is planned to extend this to also support DELETE requests}. The operation performed by the application when receiving a PUT request is \emph{merging}, or in the SQL context rather called \emph{upsert}, of the respective entities and relationships. The request is validated against the \emph{Consumption API Schema} assembled by the \emph{Consumption API Schema Assembly Service}.\par 
+As mentioned before, a RESTful API approach similar to the \emph{Types API} would not add much value here. The API has to consume huge amounts of data provided by other systems. Multiple endpoints would result in additional unnecessary requests. A single endpoint, on the other hand, makes the implementation of the adapters simpler and entities in a request may be bundled more flexibly.\par
+The downside of such an endpoint, as previously mentioned, are having to deal with the obscure error messages or alternatively implementing a more complex validation. But this is more of an implementation detail and the effort to implement the more complex validation is comparably low in comparison to the rest of the application.\par
+Furthermore, such an API also requires additional efforts, as a custom multiplexer has to be implemented to handle the routing which is commonly done by libraries and frameworks based on the URL. Popular examples therefore are \emph{Java's Spring} \cite{Spring} or \emph{Javascript's Express} \cite{Express}. In the context of the \emph{Consumption API}, this routing is handled by the \emph{Consumption MUX} individually for each entity in the request based on its \emph{kind} property. 
 
 \subsection{Query API \& Services}
+While the \emph{Types API} and \emph{Consumption API} may be interesting to administrators and developers, the \emph{Query API} is the part of the application which actually provides value. Therefore, the \emph{Query API} and respective \emph{Services} have to enable users to conveniently perform queries and analysis by traversing to answer questions such as "Which Component Versions contain the Log4J Vulnerability?".\par
+A brief summary of the API development process may help in understanding the design decisions that lead to the current GraphQL API. 
+
+\subsubsection{REST API}
+RESTful APIs are currently probably the most popular types of APIs. This is due to their simplicity and intuitiveness leveraging the built in semantics of the web, the HTTP verbs, and mapping the main entity types of an application to resources and exposing them through individual endpoints.\par
+Therefore, the initial idea was to design a single REST API for \emph{querying} as well as \emph{consuming} the data. Thus, at that point a separation of \emph{Consumption API} and \emph{Query API} was not planned yet.\par 
+There were several different approaches for endpoint design. There was the common mapping of entity types and relationships to resources and corresponding endpoints. And there were several different deviations of the common RESTful approach, trying to deal with the same \emph{three main problems} the classic REST API is facing in this use case.\par 
+The below listings outlines the endpoints of a common mapping of the entity types and relationships to resources for the example of the component entity types:
+
+\begin{lstlisting}[basicstyle=\tiny, caption=REST API Endpoints, captionpos=b, label=lst:RESTAPIEndpoints]
+/components
+/components/{component_name}
+/components/{component_name}/versions
+/components/{component_name}/versions/{version}
+/components/{component_name}/versions/{version}/component_version_references
+/components/{component_name}/versions/{version}/source_version_references
+/components/{component_name}/versions/{version}/resource_version_references
+\end{lstlisting}
+
+There is a problem arising from such common REST API design regarding the \emph{data consumption}. Theoretically, to create \emph{Component Versions}, the adapter would have to send a \emph{huge number of separate requests} and route them to the correct endpoints. Thus, to merge a version v0.15.0 of the component named \emph{github.com/gardener/etcd-druid}, a PUT request would have to be sent to \lstinline|/components/| \lstinline|github.com/gardener/etcd-druid/|. To merge the relationships, further PUT requests would have to be sent to the respective endpoints. This would result in a lot of separate requests. The relationships could not be created before the the \emph{Component Version} exists. Thus, even the sequence of the requests is important. Therefore, this approach is very impractical.\par
+But, considering that the data sources only provide the lowest aggregation level entities, thus, \emph{Component Versions}, and the respective higher aggregation level entities, thus, \emph{Components}, usually have to be created implicitly anyway, a deviation from the REST standard for data consumption was deemed acceptable. Therefore, to solve this problem, all \emph{Component Version} entities could just be sent to the \lstinline|/components| endpoint with the references as nested objects.\\
+
+There is another problem concerning the \emph{queryability} of this REST API. Designing endpoints like this does enable to retrieve all information about the individual entities, but it does not provide a possibility to traverse the relationships with a single request. As relationship itself is not really interesting for most queries, this problem could be solved by adding following endpoints:
+
+\begin{lstlisting}[basicstyle=\tiny, caption=REST API Query Endpoints, captionpos=b, label=lst:RESTAPIQueryEndpoints]
+/components/{component_name}/versions/{version}/component_versions
+/components/{component_name}/versions/{version}/source_versions
+/components/{component_name}/versions/{version}/resource_versions
+/components/{component_name}/versions/{version}/package_versions
+/components/{component_name}/versions/{version}/vulnerabilities
+/components/{component_name}/versions/{version}/licenses
+...
+/components/{component_name}/components
+/components/{component_name}/sources
+/components/{component_name}/resources
+/components/{component_name}/packages
+/components/{component_name}/vulnerabilities
+/components/{component_name}/licenses
+...
+\end{lstlisting}
+
+So, the REST API would also enable to traverse the graph and intuitively answer the most common questions. Through URL parameters, further filtering of the corresponding result set would also be possible.\\
+
+This deviation of a REST API seemed simple and intuitive, but still powerful. But there is a third problem, \emph{parsing}. In the end, this also lead to the final reason for not pursuing this approach further.\par
+Part of the problem is already visible in the data consumption example. Common routing frameworks and libraries are not able to handle parse URLs such as \lstinline|/components/github.com/gardener/etcd-druid/|, since the slash will always be interpreted as a path separator.\par 
+Intuitively, this could be solved by replacing the slash by a different character such as an underscore. But for this to work properly, the respective character cannot be allowed to use in the name. This would definitely cause compatibility issues with OCM or other component models and the application.\par 
+Another approach is to implement a custom parser.
+requires adjustment of the URL so it always ends with a keyword  \par 
+The problem becomes impossible to solve when considering corresponding endpoints for \emph{Sources} and \emph{Resources}. Using the identity properties of the OCM, respective endpoints would look like this:
+
+\begin{lstlisting}[basicstyle=\tiny, caption=REST API Source Endpoint, captionpos=b, label=lst:RESTAPISourceEndpoint]
+/sources/{component_name:component_version:source_name:extra_id}/version/...
+\end{lstlisting}
+
+While this is not really clean, it seems as this may work as long as the character separating the individual properties of the sources' identity, in this example the colon, is guaranteed to not occur within one of the properties. But the per OCM specification, the \emph{extra\_id} is a flat map of an arbitrary number of key-value pairs. As a map as unordered per definition, either the respective keys somehow would have to be included or a mechanism would have to be established to ensure the properties are always in the same order.
+
+giving the entities ids -> got to find the id first
+hash the identity properties
+
+Fielding idea of REST (hypermedia as the engine of application state)
+
+
+
+
+
+
+
 
 
 \subsection{Evaluation}
@@ -717,49 +785,7 @@ Hiding complexity from the user
 triaging (schemas for relationships)
 triage policies
 further properties
-
-
-
-
-
-
-
-
-
  
-
-
-
-\section{API}
-In the data model section, it is mentioned several times that the properties of the entities as well as several entities cannot be known upfront. As a quick revision, the reasons therefore were that the Security and Compliance Data Lake shall be independent of a specific component model and also open to a variety of data sources. This is also specified in requirement R.1. Thus, the data model in figure \ref{fig:DataModel} omitted properties and defined classes of entity types.\par
-When the data model is applied to a specific component model and to a specific set of data sources, instances of the classes of entity types are defined. In figure \ref{fig:RefDataModel} illustrating an application of the data model, the respective component model is the \emph{Open Component Model}, \emph{BDBA Package Version} is defined as an instance of \emph{Native Package Version} and \emph{Vulnerability} is defined as an instance of \emph{Info Snippet}. To provide this flexibility and extensibility, the application's data model has to be configurable at runtime.\footnote{Since in Neo4j each node and relationships stores key-value pairs and does not require a schema,  an initial idea may be to loosen the data model, provide the data received from the different data sources in the adapters with a \emph{label} declaring their respective entity type and then forward it to the data lake, where the top level properties are stored. Without going into detail, the problem with such a rather \emph{schema less} approach is that the data quality may be bad and there is no reliable way to merge or even query the data, as the keys of the properties are entirely up to the data sources. Actually, in order to even know the names of properties, the component model or data sources would have to be inspected.}\par 
-This configurability is offered through a \emph{Types API}, which allows the application administrator to define and adjust the data model to the specific use case.\par
-Besides, the application exposes two further APIs. A \emph{Consumption API} to validate and store the data received from the adapters. And, of course, a \emph{Query API} to access and analyze the data stored in the graph.\par 
-The design of these different APIs is explained in detail throughout the following sections. 
-
-\subsection{Types API}
-The \emph{Types API} exposes the following HTTP endpoints:
-
-\begin{lstlisting}[caption=Types API Endpoints, captionpos=b, label=lst:TypesAPI]
-/types/component
-
-/types/resource
-
-/types/source
-
-/types/info-snippets
-
-/types/packages
-/types/package-identity
-/types/package-attributes
-/types/package-native-attributes
-\end{lstlisting}
-Each of these endpoints accepts HTTP POST requests containing an \emph{OpenAPI} schema \cite{OpenAPISpec}.\par
-Simple OpenAPI schemata defining objects would not be sufficient to base the data model upon. To further explain these issues, below shows an exemplary schema. 
-
-
-
-To be precise, the \lstinline|/types/component| endpoint accepts the schema for the \emph{Component Version}, the \lstinline|/types/resource| endpoint for \emph{Resource Version}, the \lstinline|/types/source| endpoint for \emph{Source Version}, \lstinline|info-snippets| endpoints for all kinds of \emph{Info Snippets}.
 
 
 \subsection{Consumption Service \& API}
