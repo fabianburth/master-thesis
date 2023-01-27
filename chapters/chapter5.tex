@@ -388,7 +388,7 @@ But, being \emph{schema less} on database level may be an advantage. Although th
 \subsection{Graph Databases}
 The last database technology analyzed are \emph{graph databases}. They are also a type of NoSQL database. Although especially Neo4j is doing a lot of advertising, graph databases are still the least known database technology, as also represented by their absence in Stack Overflow's 2021 developer survey \cite{StackoverflowDeveloperSurvey}.
 
-\subsubsection{Theoretical Foundation}
+\subsubsection{Theoretical Foundation} \label{sec:GraphDB Theoretical Foundation}
 Again, first a quick repetition of the foundations. The mathematical definition of a graph is the following: 
 \begin{quote}
 	\textit{A graph is a pair of sets $G = (V,E)$. In an undirected graph, the elements of $E$ are 2-element subsets $\{v,w\}$ of $V$. In a directed graph, the elements of $E$ are 2-element tuples $(v,w)$, thus ordered pairs, of $V$.}
@@ -487,7 +487,7 @@ The concrete graph database solutions considered were primarily Neo4j and Arango
 Finally, Neo4j was chosen as it seemed to be the better fit over all. Even in the situations where JSON has to be stored, it is rarely necessary to traverse into the document structure. So it is usually sufficient to access the JSON document by its key which may also be done in Neo4j.
 
 \section{Programming Language}
-The \emph{programming language} used to implement the services comprising the Security and Compliance Data Lake is \emph{Go} \cite{Golang}. Generally, the services could probably be implemented with any common programming language.\par 
+The \emph{programming language} used to implement the services comprising the Security and Compliance Data Lake is \emph{Go} \cite{Golang}. Generally, the services could probably be implemented with any common programming language. Therefore, the following application architecture design explanations and discussions are kept \emph{programming language-agnostic}.\par 
 Since SAP Gardener is a managed kubernetes service and kubernetes is primarily written in Go, Go is the main programming language of the team. Therefore, Go was primarily chosen to fit in into the SAP Gardener ecosystem. This increases interoperability with other services of the team. But most importantly, this enables other members of the team to further maintain the application. 
 
 \section{Application Architecture}
@@ -513,20 +513,116 @@ The \emph{Validation Service}, \emph{Types Service}, \emph{Consumption API Schem
 Finally, the \emph{Repository} is on the \emph{data source logic layer} as it is responsible for communicating with the database to carry out tasks on behalf of the application \cite{AppArchitecture}.\par
 Beyond that, these services are layered even further, as the services further left, thus, service on a higher layer, use functionality provided by services further right (relative to themselves), thus, services on a lower layer. But the lower layer services are unaware of the higher level services \cite{AppArchitecture}.
 
-
-\subsection{Types API \& Services}
+\subsection{Types API \& Services} \label{sec:Types API & Services}
 As explained in the overview, every service of the application builds on the schemata which may be created through the \emph{Types API} and respective \emph{Services}. Thus, the rationale behind this service as well as the design decisions involved, are discussed first.\par
 
 \subsubsection{Schema}
 As the whole complexity of the architecture kind of revolves around the dynamically configurable schemata, a common question especially considering the \emph{schema-less} database may be, why the application even requires such rigid complete schemata?\par
 The term schema-less often leads to the misconception that the data somehow does not need to abide to any schema. Technically, this is true for most databases attributed with the term schema-less, like Neo4j. So the database will allow storing any key-value pairs. The problem is, without prior knowledge about the keys, the data cannot be retrieved. And without prior knowledge about the data types, the data may hardly be aggregated. Thus, even with schema-less databases, \emph{partial schemata} are enforced in most use cases.\par
-In this context, partial schema usually means that the application requires a specific predefined set of properties with particular data types. But the application is not limited to those properties. Therefore, a set of unspecified properties may be stored alongside the data defined by a schema. Such partial schemata may be enforced by the database through constraints or by the application through frameworks, libraries and standards like \emph{JSON Schema} \cite{JsonSchema} and OpenAPI.\\
+In this context, partial schema usually means that the application requires a specific predefined set of properties with particular data types. But the application is not limited to those properties. Therefore, a set of unspecified properties may be stored alongside the data defined by a schema.\par 
+Such partial schemata may be enforced by the database through constraints or by the application through frameworks, libraries and standards like \emph{JSON Schema} \cite{JsonSchema} and \emph{OpenAPI}. The \emph{OpenAPI Specification (OAS)} is a technical specification defining a standard, programming language-agnostic interface description for HTTP APIs. The specification is maintained by the \emph{OpenAPI Initiative (OAI)} and is based on the \emph{Swagger Specification}, donated by \emph{SmartBear} who are also among the founding members \cite{OpenAPISpec}.\par
+An OpenAPI document may be represented either in JSON or YAML format. To make this tangible, the below listing \ref{lst:SampleOpenAPI} shows a sample OpenAPI Document describing a exemplary HTTP API by leveraging the core concepts of the specification.
 
-But there is a rather simple reason, why this approach to flexibility and extensibility is not sufficient for this application. The data, thus the entities, are provided by other systems based on policies. Looking back at section \ref{sec:Integration of the Security and Compliance Data Lake into the SAP Gardener Landscape} "Integration of the Security and Compliance Data Lake", the component model data may be fetched from a component repository once a day. Correspondingly, the artifact composition data, thus the packages contained in an artifact, may also be fetched from scanning tools once a day. To determine whether an entity such as a component or package already exists in the database, the application has to know the identity of the respective entity. But different component models may identify components by different sets of properties. Different scanning tools may identify packages by different sets of properties. Furthermore, different \emph{Info Snippets} such as vulnerabilities and license are quite unlikely to be identified by the same set of properties. Therefore, it is also impossible to predefine even a partial schema.\par 
+\begin{lstlisting}[basicstyle=\tiny, caption=Sample OpenAPI Document, captionpos=b, label=lst:SampleOpenAPI]
+openapi: 3.0.0
+  info:
+    title: Sample API
+    description: Serve as a Sample to explain OpenAPI
+    version: 0.1.9
+  servers:
+    - url: http://api.example.com/v1
+      description: Production Server
+    - url: http://dev-api.example.com
+      description: Development Server
+	
+paths:
+  /customers:
+    get:
+      summary: Returns a list of customers.
+      responses:
+        200:
+          description: A JSON array of users.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customers'
+    put:
+      summary: Merge a list of customers.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customers'
+        required: true
+      responses:
+        200:
+          description: Customers merged successfully.
+        400:
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /customers/{id}:
+    get:
+      summary: Return a specific customer.
+      parameters:
+        - name: id
+          in: path
+          description: ID of a customer
+          required: true
+          schema:
+            type: string
+    ...
+...
+components:
+  schemas:
+    Customers:
+      type: array
+      items:
+        $ref: '#/components/schemas/Customer'
+    Customer:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        address:
+          type: object
+          properties:
+            city:
+              type: string
+            country:
+              type: string
+    Error:
+      type: object
+      properties:
+        title:
+          type: string
+        status:
+          type: string
+        detail:
+          type: string
+\end{lstlisting}
+
+The \emph{openapi} and the \emph{info} fields are both required. The \emph{openapi} field describes the version number of the OpenAPI Specification used. The \emph{info} field provides metadata about the API. The other fields are optional, although it is required that an OpenAPI document contains at least one \emph{paths}, \emph{components} or \emph{webhooks} field. As listing \ref{lst:SampleOpenAPI} has a \emph{paths} as well as a \emph{components} field, this requirements is fulfilled.\par 
+The paths describe the available endpoints of the API and their respective operations. Thus, \lstinline|/customers| and \lstinline|/customers/{id}| and the operations exposed through the HTTP verbs such as GET and PUT. Thereby, the formats of the \emph{content} in the \emph{requestBody} or in the \emph{responses} may be described, in this case \emph{application/json}. And most importantly, even a \emph{schema} may be provided for each respective content. Thus, the input and output data types may be specified. The specification, or rather schema, for these schemas is a superset of the JSON Schema Specification \cite{OpenAPISubset}.\par 
+The \emph{components} field, or rather object, is a container for defining reusable objects which may be referenced. Most commonly, it is used to define reusable schemas as shown in listing \ref{lst:SampleOpenAPI} for \emph{Customers}, \emph{Customer} and also \emph{Error}. But it is also possible to specify entire \emph{responses}, \emph{requestBodies} and several other \emph{components} to make them reusable. If the \emph{component} is only used once, it may also just be defined in place as shown for the schema of the \emph{id} parameter of the \lstinline|/customers/{id}| path's GET operation.\par
+The schemas themselves are quite intuitive to read, write and understand. \emph{Customers} is an \emph{array} where each item is a \emph{Customer}. Meanwhile, \emph{Customer} is a \emph{object}, thus, an abstract data type, with two required properties, \emph{id} and \emph{name}, both of type \emph{string} and an optional property \emph{address} which itself is an object.\par
+As shown by listing \ref{lst:SampleOpenAPI}, an OpenAPI document specifies an HTTP API in a format which allows both humans and computers to understand the capabilities of a service without requiring access to source code or additional documentation.\par
+There is a ecosystem of tooling around OpenAPI documents. Most prominently, \emph{Swagger UI}, a tool which automatically generates a Web UI from OpenAPI documents for convenient visualization and interaction with the API \cite{SwaggerUI}. Furthermore, there are tools for server and client code generation, for request and response validation, for document serialization and deserialization and for testing in various programming languages \cite{OpenAPISubset}.\par
+Several such tools are leveraged in the Security and Compliance Data Lake.\\
+
+There is a rather simple reason, why this partial schemata approach to flexibility and extensibility is not sufficient for this application. The data, thus, the entities, are provided by other systems based on policies. Looking back at section \ref{sec:Integration of the Security and Compliance Data Lake into the SAP Gardener Landscape} "Integration of the Security and Compliance Data Lake", the component model data may be fetched from a component repository once a day. Correspondingly, the artifact composition data, thus the packages contained in an artifact, may also be fetched from scanning tools once a day. To determine whether an entity such as a component or package already exists in the database, the application has to know the identity of the respective entity. But different component models may identify components by different sets of properties. Different scanning tools may identify packages by different sets of properties. Furthermore, different \emph{Info Snippets} such as vulnerabilities and license are unlikely to be identified by the same set of properties. Therefore, it is also impossible to predefine even a partial schema.\par 
 The dynamically configurable schemata of this application are even implemented to be complete. So, the application does not really leverage the flexibility of using a schema-less database. This is because allowing properties that are not defined by a schema often leads to a decreased data quality as it entices to just store everything. Since properties not included in the schema are also rarely used in queries, they frequently do not add value.\par 
-Besides, the real value provided by the application is the queryability of software composition. In the rare occasions where some information may be actually missing, it is easy to manually look it up in the original data source.
+Besides, the real value provided by the application is the queryability of software composition. In the rare occasions where some information may be actually missing, it is easy to manually look it up in the original data source.  
 
-\subsubsection{Meta Data Model}
+
+\subsubsection{Meta Data Model} \label{sec:Meta Data Model}
 Providing simple OpenAPI schemata would not be sufficient. A common OpenAPI component schema enables to define objects with a set of properties. Thereby, it may also be specified what data type these properties have and whether they are required \cite{OpenAPISpec}. While such a specification is enough for validation purposes, it lacks the information which properties are part of the entity type's identity.\par 
 To solve this problem, the \emph{Types API} enforces a \emph{Meta Data Model}, which defines schemata for the entity type schemata. Below listing \ref{lst:EntityTypeSchemaSchema} shows the YAML representation of the \emph{Component Type} schema schema.
 
@@ -714,7 +810,7 @@ A REST API approach similar to the \emph{Types API} would not add much value her
 The downside of such an endpoint, as previously mentioned, are having to deal with the obscure error messages or alternatively implementing a more complex validation. But this is more of an implementation detail and the effort to implement the more complex validation is comparably low considering the rest of the application.\par
 Furthermore, such an API also requires additional efforts, as a custom multiplexer has to be implemented to handle the routing which is commonly done by libraries and frameworks based on the URL. Popular examples therefore are \emph{Java's Spring} \cite{Spring} or \emph{Javascript's Express} \cite{Express}. In the context of the \emph{Consumption API}, this routing is handled by the \emph{Consumption MUX} individually for each entity in the request based on its \emph{kind} property. 
 
-\subsection{Query API \& Services}
+\subsection{Query API \& Services} \label{sec:Query API & Services}
 While the \emph{Types API} and \emph{Consumption API} may be interesting to administrators and adapter developers, the \emph{Query API} is the part of the application which actually provides value. Therefore, the \emph{Query API} and respective \emph{Services} have to enable users to conveniently perform queries and analysis by traversing to answer questions such as "Which Component Versions contain the Log4J Vulnerability?".\par
 A brief summary of the API development process may help in understanding the design decisions that lead to the current \emph{GraphQL API}. 
 
@@ -902,7 +998,7 @@ More importantly, the GraphQL query language gets rid of parsing issues as the d
 Thus, as GraphQL provides a clean, intuitive and powerful API, this is the approach that was finally selected for the Query API. GraphQL also has capabilities to manipulate data, but for this application, these are also less suitable than the \emph{Consumption API}.\par
 As already mentioned, the application cannot define the GraphQL schema statically. Instead, the schema has to be created and adjusted dynamically by the application based on the OpenAPI schemata created through the \emph{TypesAPI}. This is the biggest downside of this approach, as this is cumbersome to implement and adds a lot of complexity to the application.
 
-\subsection{Limitations and Problems}
+\subsection{Limitations and Problems} \label{sec:Limitations and Problems}
 The current application design as presented in the previous sections is not flawless and has limitations.\par 
 The main limitation of the current design is the \emph{lack of explicit schemata for higher aggregation level entity types} and the \emph{implicit creation of the respective entities}. Generally, this is rather convenient for administrators, adapter developers as well as users of the API, as the ability to query the software composition on multiple aggregation levels comes seemingly for free. The administrator does not have to configure respective schemata for \emph{Component}, \emph{Source}, \emph{Resource}, \emph{Package}, \emph{Package Version} and \emph{Relationships}. Instead, only the schemata of entity types he is actually dealing with have to be configured, as the respective entities are provided by the component model and other data sources. And the adapter developer does not have to deduct these entities and send them to the API as this is done implicitly by the application itself. So, for most use cases, this \emph{hides complexity} and may even be seen as an \emph{advantage}.\par
 But answering questions about the software composition is not the sole purpose of the application. Looking back the requirements in sections \ref{sec:Requirements}, the application shall also enable assessments (R.6). The data model section \ref{sec:Data Model} therefore mentioned that \emph{triage policies} may be defined on \emph{Sources} and \emph{Resources} and the actual \emph{triage} information shall be stored on the relationships such as between \emph{Component Versions} and \emph{Source Versions} or \emph{Resource Versions}. Furthermore, these higher aggregate level entities shall be able to store semantic information about the grouping. 
