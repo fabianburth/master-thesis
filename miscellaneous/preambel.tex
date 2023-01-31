@@ -119,6 +119,7 @@ urlcolor=blue]   % URL-Links        in blau
 % Quellenverzeichnis
 \addbibresource{chapters/literature.bib}
 \renewcommand{\mkbibnamelast}[1]{\sffamily\MakeUppercase{#1}}
+\renewcommand{\mkbibnamefirst}[1]{\sffamily\MakeUppercase{#1}}
 \xpatchbibdriver{misc} % Komma statt Punkt nach Titel
 {\usebibmacro{title}\newunit}
 {\usebibmacro{title}\printunit{\addcomma\space}}{}{}
