@@ -29,11 +29,15 @@ Each component is separated by a different specific character to allow for unamb
 
 Another convention to uniquely identify packages is the \textit{Common Platform Enumeration (CPE)} format which is primarily used in the context of vulnerability management ecosystem. Therefore, the standard is also discussed in this chapter.
 
+TODO: Problem: Lokations-spezifisch 
+
 \section{Open Source Software and Licensing}
 \textit{Open Source Software} is widely used in modern software development. As to what Open Source Software actually is, the \textit{Open Source Initiative} defined a set of rules, the \textit{Open Source Definition}, specifying distribution terms that the license of a software must comply with. Without going into detail and examining all of these terms, this definition generally ensures that such software "can be freely accessed, used, changed, and shared (in modified or unmodified form) by anyone" \cite{OSI}.\par
 This description on its own may give the impression that there is no need to keep track of what \textit{OSS Licenses} are used within an enterprise application. But there are still some limitation that \textit{OSS Licenses} can put to the usage, especially the distribution of the software. Specifically, the so called \textit{copyleft} principle and corresponding licenses might pose a challenge to some companies. While OSS generally may be used for commercial purposes, this principle dictates that if a company or individual distributes the software or a derivative, it has to be done under the same license it has been received under \cite{OSI}.\\
 
 In the context of this work, OSS is used within other OSS components, so \textit{copyleft} is not an issue. But anyway, there is still a risk involved in using OSS. A company might distribute initial software versions under an OSS License until there is some kind of customer lock-in and then switch to another more restrictive license for further versions. Also, since precedent cases may not exist regarding the legal interpretation of some specific OSS licenses, there is a risk of expensive law suits.
+
+TODO: nicht verkaufen
 
 \section{Vulnerability Management} \label{sec:Vulnerability Management}
 Due to the widespread use of OSS, vulnerability management is an increasingly important topic. Since many organizations use the same software components, vulnerabilities often become publicly known. Also, the open source nature allows attackers to get precise information about the vulnerability itself. Thus, tracking publicly known vulnerabilities in an organizations software products is a crucial capability to keep them secure.\\
@@ -78,6 +82,8 @@ Therefore CVSS is composed of three metric groups: Base, Temporal, and Environme
 
 So there exist relationships between elements on different levels of abstraction. As shown \textit{Classes} are usually member of a \textit{Category} and might also be the child, hence a more concrete description, of a \textit{Pillar}. Additionally to what is shown in the figure, these relationships may also skip levels of hierarchy. Thus, a \textit{Base Level Weakness} may be a direct member of a \textit{Category} or a child of a \textit{Pillar}. An example for a Base Level Weakness is \textit{CWE}-478\textit{: Missing Default Case in Switch Statement} which is a member of \textit{Bad Coding Practices} and a child of the class \textit{Incomplete Comparison with Missing Factors}, which is a child of the pillar \textit{Incorrect Comparison} \cite{CWEWebsite}.\\
 
+TODO: Alles eine strukturierte Klassifikations-Hierarchie, Beispiel
+
 \noindent
 \textbf{Common Platform Enumeration (CPE)}\\
 \noindent
@@ -89,12 +95,16 @@ cpe:2.3: part : vendor : product : version : update : edition : language : sw_ed
 
 Thereby \lstinline|part| may be \textit{a} for applications, \textit{o} for operating systems, and \textit{h} for hardware devices. \lstinline|edition| is a legacy attribute in the current version of the specification and may be omitted where not required for backward compatibility. The attributes after \lstinline|edition| were newly introduced in this version and are referred to as \textit{extended attributes}. \lstinline|sw_edition| should characterize a particular market or class of users a product is tailored to (e.g. online), \lstinline|target_sw| a software computing environment (e.g. linux), \lstinline|target_hw| the instruction set architecture (e.g. x86), and \lstinline|language| the language supported in the user interface \cite{CPESpec}.\\
 
+TODO: Example
+
 \noindent
 \textbf{National Vulnerability Database (NVD)}\\
 \noindent
 The \emph{NVD} is a database of vulnerabilities owned and maintained by NIST. In the paragraph about CVE, it was mentioned that the CVE Records do not contain technical data, information about risks and impact, or fixes. The NVD feeds from the CVE List and uses the information provided in the CVE Records to perform further analysis. As a result, a NVD entry exists for each CVE ID and provides a CVSS Base Score, a CWE ID and a CPE ID \cite{NVDWebsite}.\par 
 Thus, NVD combines all the aforementioned standards and concepts to provide thorough and concise human and machine-readable information about vulnerabilities. The \textit{CPE IDs}, identifying a particular software version in use, may be queried against a NVD API to automatically check for known vulnerabilities. The \textit{CVSS Base Score} is a valuable foundation for internal risk assessment and the \textit{CWE ID} helps to quickly understand the type of a vulnerability.\\
 
+
+TODO: alles MITRE, vielleicht irgendwie schon früher erwähnen
 \section{Software Bill of Materials} \label{sec:SBOM}
 A \textit{Software Bill of Materials} is an inventory of the components used in a software. It ideally contains all direct and transitive components and their dependencies, so it is in other words pretty much the dependency graph of a software \cite{OWASPWebsite,NTIASBOM}.\\
 
@@ -187,6 +197,8 @@ Relationship: SPDXRef-Makefile BUILD_TOOL_OF SPDXRef-Package-hello
 Most of the tag:value pairs are self-explanatory, but some might require some explanation. The \textit{Concluded License} is the license the SPDX file creator has concluded as the governing license of a package or a file. \textit{License Information from Files} contains a list of all licenses found in a package and the \textit{Declared License} is the license declared by the authors of the package \cite{SPDXSpec}. Additionally, listing \ref{lst:SPDX Document} illustrates how the concept of relationships may be used.\par
 It is also worth mentioning that the concept of \textit{Packages} in SPDX as a set of associated files is really rather loose. Thus, describing the project in figure \ref{fig:C Project} as two separate packages, one for source and one for binary, optionally in the same or also in two separate \textit{SPDX Documents} would be completely conform with the specification as well.\par
 Since SPDX has been around for so long and is an accepted ISO standard, there exists a lot of useful tooling. It is therefore quite easy to automate tasks like producing, consuming, transforming and validating \textit{SPDX Documents} \cite{SPDXWebsite}.\\
+
+TODO: SBOM / SBOD - Beschreibt Artifact und nicht die lieferinformationen 
  
 \section{Regulations}
 Vulnerabilities and licenses are not the only risks associated with enterprise software. Companies also need to consider governmental regulations since violations may lead to fines that have critical impact on the business.\\
@@ -204,3 +216,5 @@ The ECCN is a 5 character alpha-numeric designation used to determine whether a 
 \end{figure}
 
 All ECCNs are listed in the \textit{Commerce Control List (CCL)}. The entries in the list contain information about why an item might be under export control regulations. In the top of figure \ref{fig:ECCN Structure} is a snippet of such an entry. The reason for the export regulations of products with the classification number 4E993 is AT, which is the abbreviation for Anti-Terrorism \cite{ECCN}.
+
+TODO: Index Nummer hintendran 

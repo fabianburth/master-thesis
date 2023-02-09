@@ -1,0 +1,62 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{+w}{    }\PYG{n+nt}{component}\PYG{p}{:}
+\PYG{+w}{      }\PYG{n+nt}{name}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{github.com/gardener/etcd\PYGZhy{}druid}
+\PYG{+w}{      }\PYG{n+nt}{version}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{v0.15.3}
+\PYG{+w}{      }\PYG{n+nt}{repositoryContexts}\PYG{p}{:}
+\PYG{+w}{        }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{n+nt}{type}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{ociRegistry}
+\PYG{+w}{          }\PYG{n+nt}{baseUrl}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{eu.gcr.io/sap\PYGZhy{}se\PYGZhy{}gcr\PYGZhy{}k8s\PYGZhy{}private/cnudie/gardener/development}
+\PYG{+w}{          }\PYG{n+nt}{subPath}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{null}
+\PYG{+w}{      }\PYG{n+nt}{provider}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{internal}
+\PYG{+w}{      }\PYG{n+nt}{sources}\PYG{p}{:}
+\PYG{+w}{        }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{n+nt}{name}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{github\PYGZus{}com\PYGZus{}gardener\PYGZus{}etcd\PYGZhy{}druid}
+\PYG{+w}{          }\PYG{n+nt}{access}\PYG{p}{:}
+\PYG{+w}{            }\PYG{n+nt}{type}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{github}
+\PYG{+w}{            }\PYG{n+nt}{repoUrl}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{github.com/gardener/etcd\PYGZhy{}druid}
+\PYG{+w}{            }\PYG{n+nt}{ref}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{refs/tags/v0.15.3}
+\PYG{+w}{            }\PYG{n+nt}{commit}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{a6112534eb79021fa191edb8efd6512760ae050f}
+\PYG{+w}{          }\PYG{n+nt}{version}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{v0.15.3}
+\PYG{+w}{          }\PYG{n+nt}{extraIdentity}\PYG{p}{:}\PYG{+w}{ }\PYG{p+pIndicator}{\PYGZob{}\PYGZcb{}}
+\PYG{+w}{          }\PYG{n+nt}{type}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{git}
+\PYG{+w}{          }\PYG{n+nt}{labels}\PYG{p}{:}
+\PYG{+w}{            }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{n+nt}{name}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{cloud.gardener/cicd/source}
+\PYG{+w}{              }\PYG{n+nt}{value}\PYG{p}{:}
+\PYG{+w}{                }\PYG{n+nt}{repository\PYGZhy{}classification}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{main}
+\PYG{+w}{      }\PYG{n+nt}{resources}\PYG{p}{:}
+\PYG{+w}{        }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{n+nt}{name}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{etcd\PYGZhy{}druid}
+\PYG{+w}{          }\PYG{n+nt}{version}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{v0.15.3}
+\PYG{+w}{          }\PYG{n+nt}{type}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{ociImage}
+\PYG{+w}{          }\PYG{n+nt}{access}\PYG{p}{:}
+\PYG{+w}{            }\PYG{n+nt}{type}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{ociRegistry}
+\PYG{+w}{            }\PYG{n+nt}{imageReference}\PYG{p}{:}\PYG{+w}{ }\PYG{p+pIndicator}{\PYGZgt{}\PYGZhy{}}
+\PYG{+w}{              }\PYG{n+no}{eu.gcr.io/sap\PYGZhy{}se\PYGZhy{}gcr\PYGZhy{}k8s\PYGZhy{}public/eu\PYGZus{}gcr\PYGZus{}io/gardener\PYGZhy{}project/gardener/etcd\PYGZhy{}druid:v0.15.3\PYGZhy{}mod1}
+\PYG{+w}{          }\PYG{n+nt}{digest}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{null}
+\PYG{+w}{          }\PYG{n+nt}{extraIdentity}\PYG{p}{:}\PYG{+w}{ }\PYG{p+pIndicator}{\PYGZob{}\PYGZcb{}}
+\PYG{+w}{          }\PYG{n+nt}{relation}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{local}
+\PYG{+w}{          }\PYG{n+nt}{labels}\PYG{p}{:}
+\PYG{+w}{            }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{n+nt}{name}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{cloud.gardener.cnudie/migration/original\PYGZus{}ref}
+\PYG{+w}{              }\PYG{n+nt}{value}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{eu.gcr.io/gardener\PYGZhy{}project/gardener/etcd\PYGZhy{}druid:v0.15.3}
+\PYG{+w}{            }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{n+nt}{name}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{cloud.gardener.cnudie/sdo/lssd}
+\PYG{+w}{              }\PYG{n+nt}{value}\PYG{p}{:}
+\PYG{+w}{                }\PYG{n+nt}{processingRules}\PYG{p}{:}
+\PYG{+w}{                  }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{purge\PYGZus{}berkeleydb\PYGZus{}to\PYGZus{}public}
+\PYG{+w}{          }\PYG{n+nt}{srcRefs}\PYG{p}{:}\PYG{+w}{ }\PYG{p+pIndicator}{[]}
+\PYG{+w}{      }\PYG{n+nt}{componentReferences}\PYG{p}{:}
+\PYG{+w}{        }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{n+nt}{name}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{etcd}
+\PYG{+w}{          }\PYG{n+nt}{componentName}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{github.com/gardener/etcd\PYGZhy{}custom\PYGZhy{}image}
+\PYG{+w}{          }\PYG{n+nt}{version}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{v3.4.13\PYGZhy{}bootstrap\PYGZhy{}8}
+\PYG{+w}{          }\PYG{n+nt}{digest}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{null}
+\PYG{+w}{          }\PYG{n+nt}{extraIdentity}\PYG{p}{:}
+\PYG{+w}{            }\PYG{n+nt}{imagevector\PYGZhy{}gardener\PYGZhy{}cloud+tag}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{v3.4.13\PYGZhy{}bootstrap\PYGZhy{}8}
+\PYG{+w}{          }\PYG{n+nt}{labels}\PYG{p}{:}
+\PYG{+w}{            }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{n+nt}{name}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{imagevector.gardener.cloud/images}
+\PYG{+w}{              }\PYG{n+nt}{value}\PYG{p}{:}
+\PYG{+w}{                }\PYG{n+nt}{images}\PYG{p}{:}
+\PYG{+w}{                  }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{n+nt}{name}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{etcd}
+\PYG{+w}{                    }\PYG{n+nt}{repository}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{eu.gcr.io/gardener\PYGZhy{}project/gardener/etcd}
+\PYG{+w}{                    }\PYG{n+nt}{resourceId}\PYG{p}{:}
+\PYG{+w}{                      }\PYG{n+nt}{name}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{etcd}
+\PYG{+w}{                    }\PYG{n+nt}{sourceRepository}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{github.com/gardener/etcd\PYGZhy{}custom\PYGZhy{}image}
+\PYG{+w}{                    }\PYG{n+nt}{tag}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{v3.4.13\PYGZhy{}bootstrap\PYGZhy{}8}
+\PYG{+w}{      }\PYG{n+nt}{labels}\PYG{p}{:}\PYG{+w}{ }\PYG{p+pIndicator}{[]}
+\PYG{+w}{    }\PYG{n+nt}{signatures}\PYG{p}{:}\PYG{+w}{ }\PYG{p+pIndicator}{[]}
+\end{Verbatim}
