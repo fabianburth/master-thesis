@@ -118,8 +118,8 @@ At this point, some insight into the development process may be beneficial to un
 But the data model also predefined the properties of the \emph{package} entity types. In fact, the third aggregate level for \emph{packages}, \emph{Native Package Version}, did not exist at all. Instead, the \emph{Package Version} entity type had a set of properties that was hoped to be common and harmonizable throughout all prospective data sources. At this time, the application was also tailored to only having scanning tools as data sources. Therefore, to define this set of properties, the API documentations of different scanning tools were analyzed for the common and most important properties, especially the ones of BDBA and Mend \cite{MendAPI}. Additionally, to get a better understanding, both scanners were used on some artifacts to get sample data. Then, the provided attributes were narrowed down and some interviews with developers were conducted. A huge effort was made here, as this was such an important decision. Also, instead of having the \emph{Info Snippet} class of entity types, there was only a \emph{Vulnerability} and a \emph{License} entity type whose sets of properties were defined in the same process. Apart from the fact that there was already a substantial amount of disagreement between different developers which properties were actually required, by the time the PoC was finished, several new use cases were discovered that required additional properties and even entire additional entity types to provide other metadata than vulnerabilities or licenses.\par
 This led to a change in perspective, interpreting the task of defining the right entity types with the right properties rather as a task to make the entire application extensible regarding the respective entity types and properties. But this flexibility and extensibility comes at the cost of a highly increased overall complexity. Apart from remodeling the data model, it also required a completely new architecture and completely different implementation. Thus, only after that, the scope widened drastically, also allowing other component models. Consequently, as a kind of disclaimer, the design process presented here is not exactly as chronological as it may initially seem, since it hides a complete development iteration leading up to the final concepts.
 
-\subsection{Application of the Data Model} \label{sec:Application of the Data Model}
-Although a great effort was made to make the data model as tangible as possible, it may still be hard to grasp due to its abstract nature, omitting properties and introducing classes of entity types. Therefore, this section discusses how this data model could be applied. As reference component model, the OCM is used and as reference data sources, only BDBA is used. This thereby also reveals a problem that has to be faced when applying this data model to a real world use case. The figure \ref{fig:RefDataModel} shows the corresponding data model instance.\par
+\subsection{Application of the Meta Data Model} \label{sec:Application of the Data Model}
+Although a great effort was made to make the meta data model as tangible as possible, it might still be hard to grasp due to its abstract nature, omitting properties and introducing classes of entity types. Therefore, this section discusses how this meta data model could be applied. As reference component model, the OCM is used and as reference data sources, only BDBA is used. This thereby also reveals a problem that has to be faced when applying this data model to a real world use case. The figure \ref{fig:RefDataModel} shows the corresponding data model instance.\par
 
 \begin{figure}[H]
 	\centering
@@ -130,28 +130,37 @@ Although a great effort was made to make the data model as tangible as possible,
 
 The figure is very crowded. But this is necessary as the purpose of it is to provide a concrete and thorough illustration of how the meta data model may be applied to specific component models and data sources. Thus, it shows a concrete example of how to instantiate the model's entity types for a concrete environment with appropriate attributes.\par
 The important aspect to point out here is the relationship between \emph{Component Version} and \emph{Source Version} and between \emph{Component Version} and \emph{Resource Version}. Although depicted as a relationship with (n:m)-cardinatility in compliance with the meta data model, due to the \emph{Component Version-Local Identity} of \emph{Source Version} and \emph{Resource Version}, these can actually only be (1:n)-relationships. There were detailed explanations about this in section \ref{sec:Open Component Model} ''Open Component Model''. The SAP Gardener team chose this initially rather non-intuitive specification of \emph{Source Versions} and \emph{Resource Versions} with \emph{Local Identities} since in practice, it is difficult to reliably determine whether two referenced technical artifacts are actually the same technical artifact.\par 
-The following section further explain the issue and discusses different approaches of dealing with this \emph{artifact identity problem}. It thereby points out the use cases and limitations of each approach.\par
+The following section further explains the issue and discusses different approaches of dealing with this \emph{artifact identity problem}. It thereby points out problems of each approach.\par
 As the common software developer immediately attempts to translate this data model into tables, a corresponding exemplary relational model is shown in the appendix \ref{apx:Relational Model of the Example Data Model Instance}.  
 
-\subsubsection{Artifact Identity Problem} 
-\noindent\textbf{Artificial Identifiers}\\
-The initial and most obvious approach is to treat technical artifacts just as components. Thus, assign a globally unique name and a version to each technical artifact. But the reason this works for components is that these are purely abstract or logical entities. Thus, there is no digital or rather technical twin such as source code or a binary that corresponds to a specific component. If there is, who guarantees that two \emph{Resource Versions} with the same name and the same version actually point to the same binary? Or reciprocal, that two \emph{Resource Versions} pointing to the same binary actually have the same name and version? Where and how would one look up this globally unique name of a \emph{Resource Version} in the first place?\par
-A common approach in this situations are \emph{Uniform Resource Identifiers (URI)}. As introduced in section \ref{sec:Software Identification} ''Software Identification'', by providing a specification of how this URI is composed, standards such as \emph{purl} provide a way to create theoretically reproducible identifiers. Theoretically, because in practice composing this URIs still has to be done by people. Consequently, there is always room for interpretation and human error. Imagine a \emph{Resource Version} in two different \emph{Component Versions} referencing artifacts in two different repositories, for example \lstinline|github.com/example/nginx| with tag \lstinline|1.0.3| and \lstinline|github.com/example/nginx-webserver| also with tag \lstinline|1.0.3|. At this point, it is difficult to determine, whether these are technically the same artifact and should consequently have the same URI. Thus, this approach is unreliable and impractical.\\
+\subsection{Artifact Identity Problem}
+Essentially, there exist 3 options to identify artifacts: by arbitrarily-defined names, by location and by content.\\
 
-\noindent\textbf{Origin URLs as Global Identifiers}\\
-In order to guarantee that two \emph{Resource Versions} with the same URI actually point to the same binary and that two \emph{Resource Versions} pointing to the same binary actually have the same URI, this URI has to be a URL, pointing to the stored binary. Therefore, a coupling of identity and location is necessary.\par 
-The straight forward approach to do this in practice is to use the URLs provided by the repositories. But, as the example above shows, this approach is not really flexible, as the identifiers have to be immutable even if the artifacts location changes.\par 
-Therefore, in OCM the access attribute may be changed. Still in SAP Gardener technical artifacts and component descriptors are all replicated from a central development landscape into other landscapes. Only the access attributes' values change in this transport process. So the development landscape may serve as single source of truth, a \emph{central origin} for all artifacts, and the respective \emph{origin artifact URLs} of the access property in the development landscape could be used as \emph{global identifiers}. Even though the URLs in the access attribute of the component descriptors in other landscapes may differ from the global identifier of the artifact, as this \emph{identifier is the URL} used to copy the artifact to the location referenced by the URL in the new access attribute, it is the same per construction. So this approach is generally reliable and practical.\par
-SAP Gardener did not consider this approach anyway, as it is more complex and globally unique identifiers for artifacts were not relevant for the original scope of the OCM, which was deployment automation.\\
+\noindent\textbf{Arbitrarily-Defined Name}\\
+The initial idea and most obvious approach is to treat technical artifacts just as components. Thus, assign an arbitrarily-defined globally unique name and a version to each technical artifact.\par 
+This works for components since these are \emph{technology-agnostic} aggregations of artifacts \emph{representing a specific semantic}. As components are \emph{technology-agnostic}, they can all conveniently be stored in a central component repository (as shown in the architecture in \ref{fig:HolisticSolutionArchitecture}). There, the uniqueness of the name and accessibility through the name can be ensured. As the arbitrarily-defined name of a component identifies a dedicated usage context or meaning for the provided software, the name of two components with the exact same technical content may be different.\par
+Opposed to that, artifacts are generally expected to \emph{represent a technology specific content}. As artifacts are technology specific (OCI Images, Maven Package, ...), they are frequently stored in multiple different technology specific repositories. There, the name has to abide to technology specific naming schemes and its uniqueness is only ensured within the specific technology or repository. As the arbitrarily-defined name of an artifact would identify a specific content, the name of two artifacts with the exact same technical content should be the same.\par
+Thus, the globally unique arbitrarily-defined name would have to be mapped to all technology specific names of the artifact. But thereby, it is difficult to determine whether two artifacts stored in different technology specific repositories are the same technical artifact.\\
 
-\noindent\textbf{Digests as Global Identifiers}\\
-Another option to determine whether two artifacts are technically the same, even though they are located in different repositories is to calculate a suitable \emph{normalized digest}.\par 
+\noindent\textbf{Location}\\
+To avoid such a mapping and its implications while still being able to uniquely identify and access artifacts independent of the technology specific repository they are stored, the name has to be directly coupled to the location. Thus, something like a URL, pointing to the artifact has to be used.\par
+But this approach is not flexible as an artifact can only be stored in one location. Otherwise, artifacts with the exact same technical content would have different names.\\
+
+\noindent\textbf{Content}\\
+Another option to identify artifacts would be through their content. Thus, to determine whether two artifacts are technically the same, even though they are located in different repositories is to calculate a suitable \emph{normalized digest} of its content.\par 
 A \emph{digest} refers to a short, fixed-length string calculated through a hash function \cite{Cryptography}. There are several features in which artifacts may vary but that are irrelevant for their comparison. For example, the exact same source code file may provide different digests when hashed with the exact same hash method, depending on whether it is hashed on a windows or a linux machine. This is due to the different line endings, thus ''Carriage Return and Line Feed'' on windows and ''Line Feed'' on linux. In order to calculate a normalized digest, the input data for the hash function is prepared so that such irrelevant features do not have an impact on the digest. So, the input data is normalized.\par
 This approach is generally reliable and clean, but there are again several problems. When looking at figure \ref{fig:RefDataModel} above, there is already a digest property available for \emph{Resource Versions}. As described in section \ref{sec:Open Component Model} ''Open Component Model'', this digest property specifies a hash function, a normalization function and the corresponding digest value. Although the primary reason for this is that different kinds of resources, for example executeables and OCI Images, may need different kinds of normalization functions, this also means that the same artifact may have different digest values in different \emph{Component Versions}.\par
-Consequently, the digests need to be calculated in a standardized way, independent of the OCM. But even then, there is still another issue regarding the data model. There is no way to decide whether artifacts with different normalized digests may be different versions of the same artifact. Thus, the additional aggregate level, \emph{Source} and \emph{Resource}, required for triage policies is practically impossible to maintain.\\
+Consequently, the digests need to be calculated in a standardized way, independent of the OCM. But even then, there is still another issue regarding the data model. There is no way to decide whether artifacts with different normalized digests may be different versions of the same artifact. Thus, the relationship to a corresponding abstract entity, \emph{Source} and \emph{Resource}, required for triage policies is practically impossible to maintain.\\
 
-\noindent\textbf{Component Local Identifiers}\\
-This is the approach used in the OCM. This concept was explained in detail in section \ref{sec:Open Component Model} ''Open Component Model''. Although it is not intuitive, only having \emph{local identifiers for artifacts is still functional regarding the goals which shall be achieved by the data model}.
+So non of these approaches is practical. But there are 2 variations of the basic options that might be leveraged for the \emph{Data Lake}:\\
+
+\noindent\textbf{Central Origin Location}\\
+All artifacts could be replicated into a central origin repository. The URL pointing to the artifacts within this central origin repository could be used as their identifier.\par
+Additionally, the artifacts could have an access attribute similar to the definition of the OCM. When artifacts are replicated into other repositories, they only change their access attribute but keep the original URL of the central repository as name. This ensures assures uniqueness of the name and technical identity per construction while allowing multiple different technology specific repositories.\par
+SAP Gardener did not consider this approach anyway, as it is more complex and globally unique identifiers for artifacts were not relevant for the original scope of the OCM, which was deployment automation.\\
+
+\noindent\textbf{Component Local Arbitrarily-Defined Names}\\
+This is the approach used in the OCM. Compared to what was explained in the context of \emph{Arbitrarily-Defined Names}, with this approach, the arbitrarily-defined name of an artifact also describes its semantic instead of representing its content. Thus, it waives the necessity to globally uniquely identify the technical artifacts in terms of their contents. This concept was explained in detail in section \ref{sec:Open Component Model} ''Open Component Model''. Although it is not intuitive, only having \emph{local identifiers for artifacts is still functional regarding the goals which shall be achieved by the data model}.
 
 \begin{figure}[H]
 	\centering
@@ -248,38 +257,38 @@ To evaluate and properly illustrate the suitability of the database technology r
 \end{figure}
 
 Figure \ref{fig:PackageVersionsAndDependencies} shows the \emph{Package Version} entity type and the corresponding \emph{depends on} relationship type mapped to tables and filled with some example entities.  As indicated by the ordering of the tables, the example also assumes there are indexes on \emph{ID} and \emph{PackageVersionID}. Furthermore, it may also be assumed, that there is a composite index on \emph{Name} and \emph{Version}.\par
-For simplicity reasons, initially pretend there are no transitive dependencies. In this case, to answer the question ''Which Package Versions does the spring-context:1.2.12 Package Version depend on?'' in a relational database, the following SQL query would have to be used:
+For simplicity reasons, initially pretend there are no transitive dependencies. In this case, to answer the question ''Which Package Versions does the spring-context:1.2.12 Package Version depend on?'' in a relational database, the following SQL query would have to be used:\\
 
-\begin{lstlisting}[language=SQL, caption=Package Version Dependencies, captionpos=b, label=lst:PackageVersionDependencies]
+\begin{lstlisting}[language=SQL, caption=SQL Query -- Package Version Dependencies, captionpos=b, label=lst:PackageVersionDependencies]
 SELECT p1.Name, p1.Version
   FROM PackageVersion p1 
   JOIN DependsOn
     ON DependsOn.RelatedPackageVersionID = p1.ID
   JOIN PackageVersion p2
     ON DependsOn.PackageVersionID = p2.ID
- WHERE p2.Name = ''spring-context'' AND p2.Version = ''1.2.12''
+ WHERE p2.Name = 'spring-context' AND p2.Version = '1.2.12'
 \end{lstlisting}
 
-Based on the sample data in figure \ref{fig:PackageVersionsAndDependencies}, this returns \emph{java-jdk 1.3.1} and \emph{spring-core 2.1.4} \cite{neo4j}. Although slightly hard to read, the query is still relatively simple and not particularly computationally expensive, because it constraints the number of rows under consideration by applying the filter \lstinline|WHERE p2.Name = ''spring-context'' AND | \lstinline|p2.Version = ''1.2.12''|. Based on the indexes, the initial look up of this record has a time complexity of $O(log(n))$ with $n$ being the number of rows in the \emph{PackageVersion} table. The consecutive join then has a time complexity of $O(m*log(n))$ with $m$ being the number of records found during the previous look up and $n$ being the number of rows in the \emph{DepensOn} table. Each additional join in the query adds a $O(m*log(n))$. This assumes the so called nested loop join algorithm is used. This is usually the most efficient join algorithm in such scenarios, where indexes on the join condition exist and it is a small number of rows that have to be joined. Relational databases automatically estimate and choose the best strategy \cite{PostgreSQLJoin}. Thus, depending on the number of joins, the general time complexity for such a relationship traversal query may be estimated with
+Based on the sample data in figure \ref{fig:PackageVersionsAndDependencies}, this returns \emph{java-jdk 1.3.1} and \emph{spring-core 2.1.4} \cite{neo4j}. Although slightly hard to read, the query is still relatively simple and not particularly computationally expensive, because it constraints the number of rows under consideration by applying the filter \lstinline|WHERE p2.Name = 'spring-context' AND | \lstinline|p2.Version = '1.2.12'|. Based on the indexes, the initial look up of this record has a time complexity of $O(log(n))$ with $n$ being the number of rows in the \emph{PackageVersion} table. The consecutive join then has a time complexity of $O(m*log(n))$ with $m$ being the number of records found during the previous look up and $n$ being the number of rows in the \emph{DepensOn} table. Each additional join in the query adds a $O(m*log(n))$. This assumes the so called nested loop join algorithm is used. This is usually the most efficient join algorithm in such scenarios, where indexes on the join condition exist and it is a small number of rows that have to be joined. Relational databases automatically estimate and choose the best strategy \cite{PostgreSQLJoin}. Thus, depending on the number of joins, the general time complexity for such a relationship traversal query may be estimated with
 $$O(log(n)) + O(m*log(n)) + ... + O(m*log(n))$$ 
 
-Now, to answer the reciprocal question ''Which Package Versions depend on the spring-context:1.2.12 Package Version?'' in a relational database, the following SQL query would have to be used:
+Now, to answer the reciprocal question ''Which Package Versions depend on the spring-context:1.2.12 Package Version?'' in a relational database, the following SQL query would have to be used:\\
 
-\begin{lstlisting}[language=SQL, caption=Package Version Reciprocal Dependencies, captionpos=b, label=lst:PackageVersionReciprocalDependencies]
+\begin{lstlisting}[language=SQL, caption=SQL Query -- Package Version Reciprocal Dependencies, captionpos=b, label=lst:PackageVersionReciprocalDependencies]
 SELECT p1.Name, p1.Version
   FROM PackageVersion p1 
   JOIN DependsOn
     ON DependsOn.PackageVersionID = p1.ID
   JOIN PackageVersion p2
     ON DependsOn.RelatedPackageVersionID = p2.ID
- WHERE p2.Name = ''spring-context'' AND p2.Version = ''1.2.12''
+ WHERE p2.Name = 'spring-context' AND p2.Version = '1.2.12'
 \end{lstlisting}
 
 Based on the sample data in figure \ref{fig:PackageVersionsAndDependencies}, this returns \emph{log4j 1.5.2} \cite{neo4j}. Although this query looks very similar to the one before, it is computationally more expensive, because there is no index on \emph{RelatedPackageVersionID} and consequently, the whole table has to be considered for the join with a complexity of $O(n)$. In practice, an additional index could be added without problems, as the write performance which would suffer from maintaining an additional index, does not matter too much in this use case. Then joining each record would also have a complexity of $O(log(n))$, leading to the same overall complexity as the previous query.\\
 
-Finally, the transitive dependencies have to be considered. To traverse these transitive dependencies in SQL, recursive joins have to be used. Therefore, joining a table with itself. But as the dependency chains may be of arbitrary length, a simple recursive query is not sufficient. Nowadays, most of the popular relational databases provide a SQL feature, the WITH clause, or rather \emph{Common Table Expressions (CTE)}, to support recursive queries \cite{mysqlCTE, postgresCTE, sqliteCTE}. CTEs are auxiliary statements which can be thought of as defining temporary tables existing for just one query \cite{postgresCTE}. So, to actually answer the question ''Which Package Versions does the spring-context:1.2.12 Package Version depend on?'' correctly, thus also including the transitive dependencies, the following SQL query would have to be used:
+Finally, the transitive dependencies have to be considered. To traverse these transitive dependencies in SQL, recursive joins have to be used. Therefore, joining a table with itself. But as the dependency chains may be of arbitrary length, a simple recursive query is not sufficient. Nowadays, most of the popular relational databases provide a SQL feature, the WITH clause, or rather \emph{Common Table Expressions (CTE)}, to support recursive queries \cite{mysqlCTE, postgresCTE, sqliteCTE}. CTEs are auxiliary statements which can be thought of as defining temporary tables existing for just one query \cite{postgresCTE}. So, to actually answer the question ''Which Package Versions does the spring-context:1.2.12 Package Version depend on?'' correctly, thus also including the transitive dependencies, the following SQL query would have to be used:\\
 
-\begin{lstlisting}[language=SQL, caption=Package Version Dependencies (including transitive), captionpos=b, label=lst:PackageVersionDependenciesIncTransitive]
+\begin{lstlisting}[language=SQL, caption=SQL Query -- Package Version Dependencies (transitive), captionpos=b, label=lst:PackageVersionDependenciesIncTransitive]
 WITH RECURSIVE cte(PackageVersionID) AS (
   -- Anchor member.
   SELECT d.RelatedPackageVersionID
@@ -301,9 +310,9 @@ SELECT p.Name, p.Version
     ON cte.PackageVersionID = p.ID
 \end{lstlisting}
 
-Based on the sample data in figure \ref{fig:PackageVersionsAndDependencies}, this returns \emph{java-jdk 1.3.1} twice (as union all does not remove duplicates) and \emph{spring-core 2.1.4}. And correspondingly to answer reciprocal question ''Which Package Versions depend on the spring-context:1.2.12 Package Version?'', the following SQL query would have to be used:
+Based on the sample data in figure \ref{fig:PackageVersionsAndDependencies}, this returns \emph{java-jdk 1.3.1} twice (as union all does not remove duplicates) and \emph{spring-core 2.1.4}. And correspondingly to answer reciprocal question ''Which Package Versions depend on the spring-context:1.2.12 Package Version?'', the following SQL query would have to be used:\\
 
-\begin{lstlisting}[language=SQL, caption=Package Version Reciprocal Dependencies (including transitive), captionpos=b, label=lst:PackageVersionReciprocalDependenciesIncTransitive]
+\begin{lstlisting}[language=SQL, caption=SQL Query -- Package Version Reciprocal Dependencies (transitive), captionpos=b, label=lst:PackageVersionReciprocalDependenciesIncTransitive]
 WITH RECURSIVE cte(PackageVersionID) AS (
   -- Anchor member.
   SELECT d.PackageVersionID
@@ -338,7 +347,7 @@ So, as a conclusion for this section, a quick summary of the most important aspe
 Document databases are a type of NoSQL database which is commonly interpreted as an acronym for ''Not only SQL''. It is thereby somewhat of an extension of the most simplistic kind of databases, the \emph{key-value databases}. These enable very fast look ups at the cost of only allowing users to address records by their key. The value is usually \emph{opaque} to the database. Correspondingly, document databases also do not require a schema for the values they store, but they store the values in a standard format such as XML, PDF or most frequently JSON \cite{NoSQL}. Hence, the values are not opaque and the database may still parse the data and create indexes on non-key fields even though being \emph{schema-less}.\\
 
 Generally, the primary reason for using document databases, or rather any NoSQL databases, are the horizontal scalability issues of relational databases \cite{NoSQL}. While vertical scalability refers to providing the database machine with more compute resources, thus, CPU and RAM, horizontal scalability refers to distributing the database over multiple machines. The relevant questions at this point are: Where do the scalability issues come from? How are they overcome by document databases?\par
-\emph{De-normalization} is one of the key features of document databases. Thus, while relational databases map entity types and relationships to multiple tables connected by foreign keys, document databases allow storing entities and relationships as nested structures through their schema-less nature. These nested structures are often referred to as \emph{documents} or also more generally \emph{aggregates}, a term from \emph{Domain-Driven Design} describing a collection of related objects that is treated as a unit. Documents are grouped to \emph{collections}, which is kind of the equivalent to a table in relational databases \cite{NoSQLDistilled}. A common example is shown by figure \ref{fig:NoSQLDataModel} and listing \ref{lst:JSONDocument}.\par 
+\emph{De-normalization} is one of the key features of document databases. Thus, while relational databases map entity types and relationships to multiple tables connected by foreign keys, document databases allow storing entities and relationships as nested structures through their schema-less nature. These nested structures are often referred to as \emph{documents} or also more generally \emph{aggregates}, a term from \emph{Domain-Driven Design} describing a collection of related objects that is treated as a unit. Documents are grouped to \emph{collections}, which is kind of the equivalent to a table in relational databases \cite{NoSQLDistilled}. A common example is shown by figure \ref{fig:NoSQLDataModel} and listing \ref{lst:SalesDataJSONDocument}.\\
 
 \begin{figure}[H]
 	\centering
@@ -347,23 +356,23 @@ Generally, the primary reason for using document databases, or rather any NoSQL 
 	\label{fig:NoSQLDataModel}
 \end{figure}
 
-\begin{lstlisting}[language=JSON, caption=JSON Document, captionpos=b, label=lst:JSONDocument]
+\begin{lstlisting}[language=JSON, caption=Document Database -- Data as Nested JSON Document, captionpos=b, label=lst:SalesDataJSONDocument]
 {
-  ''id'': 1,
-  ''name'': ''Martin'',
-  ''address'': 
-    {''city'': ''Berlin''}
-  ''orders'': [
-    {''id'': 99,
-     ''date'': ''04.01.2023'',
-     ''shippingAddress'': {''city'': ''Berlin''}
-     ''products'': [
-       {''id'': 42,
-        ''name'': ''The Hitchhiker's Guide to the Galaxy'',
-        ''price'': 7.50 },
-       {''id'': 12,
-        ''name'': ''The Art of Computer Programming'',
-        ''price'': 120.00 }
+  'id': 1,
+  'name': 'Martin',
+  'address': 
+    {'city': 'Berlin'}
+  'orders': [
+    {'id': 99,
+     'date': '04.01.2023',
+     'shippingAddress': {'city': 'Berlin'}
+     'products': [
+       {'id': 42,
+        'name': 'The Hitchhiker's Guide to the Galaxy',
+        'price': 7.50 },
+       {'id': 12,
+        'name': 'The Art of Computer Programming',
+        'price': 120.00 }
       ]
     }
   ]
@@ -380,28 +389,28 @@ Generally, there are several restrictions which may serve as an orientation whet
 If the application frequently has to \emph{access the embedded document independently of the embedding document(s)} and the \emph{documents are quite large}, it may be best to normalize and link the document rather than embedding due to the otherwise excessive RAM usage \cite{MongoDBAppliedDesign}. In above example, orders may be queried independently of customers. So it may be better to normalize this and make the orders reference the respective customer.\par 
 \emph{If documents grow, the database may have to relocate it on disk} to an area with more space. In the above example, as a customer may regularly order products from the retailer, the order array within the customer document would grow and potentially require relocation. Such a relocation decreases performance significantly \cite{MongoDBAppliedDesign}. Moreover, document databases may even have a \emph{hard limit for the document size}. For MongoDB, this limit is 16MB \cite{MongoDBDocumentSizeLimit}. So, this is another argument to normalize the orders.\par 
 Considering all these limitations, many-to-many relationships are especially problematic to de-normalize. Therefore, MongoDB even suggests to \emph{model complex many-to-many relationships in normalized form} \cite{MongoDBDataModeling}. For simple many-to-many relationships, where the references may rarely be updated, it is also a possibility to embed the references instead of creating the equivalent of a join table.\par
-As especially MongoDB and its query language provide a lot of the functionality also provided by SQL, the final question may be, why not store the relational model in a document database? The primary concern therefore may be data integrity. Although MongoDB provides ACID conform transactions, there is no way to enforce referential integrity on database level. Without a database schema, there is no way to tell the database about foreign keys and corresponding constraints.\par Furthermore, several operations such as joining are usually more efficient with a relational database. The syntax to perform the join is also simpler with SQL. To make this more tangible, below listing shows the syntax to perform the logical equivalent to a left outer join on orders with products. The example thereby assumes the data is stored according to a relational model as shown in appendix \ref{apx:Data Definition Statement for MongoDB Sample Data}. 
+As especially MongoDB and its query language provide a lot of the functionality also provided by SQL, the final question may be, why not store the relational model in a document database? The primary concern therefore may be data integrity. Although MongoDB provides ACID conform transactions, there is no way to enforce referential integrity on database level. Without a database schema, there is no way to tell the database about foreign keys and corresponding constraints.\par Furthermore, several operations such as joining are usually more efficient with a relational database. The syntax to perform the join is also simpler with SQL. To make this more tangible, below listing shows the syntax to perform the logical equivalent to a left outer join on orders with products. The example thereby assumes the data is stored according to a relational model as shown in appendix \ref{apx:Data Definition Statement for MongoDB Sample Data}.\\
 
-\begin{lstlisting}[language=JSON, caption=JSON Document, captionpos=b, label=lst:JSONDocument]
+\begin{lstlisting}[language=JSON, caption=Document Database -- MongoDB Join Example, captionpos=b, label=lst:JSONDocument]
 db.orders.aggregate([
-{ ''$match'': { ''_id'': 1 } },
-{ ''$lookup'': {
-  ''from'': ''relations'',
-  ''let'': { ''orderId'': ''$_id'' },
-  ''pipeline'': [{''$match'':{''$expr'':{''$eq'':[''$order'',''$$orderId'']}}},
-  { ''$lookup'': {
-    ''from'': ''products'',
-    ''let'': { ''productId'': ''$product'' },
-    ''pipeline'': [{''$match'':{''$expr'':{''$eq'':[''$_id'',''$$productId'']}}}],
-    ''as'': ''products'' }
+{ '$match': { '_id': 1 } },
+{ '$lookup': {
+  'from': 'relations',
+  'let': { 'orderId': '$_id' },
+  'pipeline': [{'$match':{'$expr':{'$eq':['$order','$$orderId']}}},
+  { '$lookup': {
+    'from': 'products',
+    'let': { 'productId': '$product' },
+    'pipeline': [{'$match':{'$expr':{'$eq':['$_id','$$productId']}}}],
+    'as': 'products' }
   }],
-  ''as'': ''order_products'' }
+  'as': 'order_products' }
 },
-{ ''$project'': {
-  ''_id'': 1,
-  ''date'': 1,
-  ''shippingAddress'': 1,
-  ''products'': ''$order_products.products'' }
+{ '$project': {
+  '_id': 1,
+  'date': 1,
+  'shippingAddress': 1,
+  'products': '$order_products.products' }
 }
 ])
 \end{lstlisting}
@@ -475,24 +484,24 @@ This suitability section takes a similar approach as the first one, evaluating t
 	\label{fig:PackageVersionsAndDependenciesGraph}
 \end{figure}
 
-Neo4j defines its own SQL inspired language called \emph{cypher}. To answer the respective question ''Which Package Version does the spring-context:1.2.12 Package Version depend on?'' in Neo4j, the following cypher query would have to be used:
+Neo4j defines its own SQL inspired language called \emph{cypher}. To answer the respective question ''Which Package Version does the spring-context:1.2.12 Package Version depend on?'' in Neo4j, the following cypher query would have to be used:\\
 
-\begin{lstlisting}[caption=Package Version Dependencies (including transitive), captionpos=b, label=lst:CypherTransitive]
-MATCH (p1:PACKAGE_VERSION {Name:''spring-context'',Version:''1.2.12''})
+\begin{lstlisting}[caption=Cypher Query -- Package Version Dependencies (transitive), captionpos=b, label=lst:CypherTransitive]
+MATCH (p1:PACKAGE_VERSION {Name:'spring-context',Version:'1.2.12'})
 MATCH (p2:PACKAGE_VERSION)
 WHERE (p1)-[:DEPENDS_ON*1..]->(p2)
 RETURN (p2)
 \end{lstlisting}
 
-The first line in listing \ref{lst:CypherTransitive} matches the node with the \emph{label} \lstinline|PACKAGE_VERSION| and the key-value-pairs \lstinline|Name: ''spring-context''| and \lstinline|Version: ''1.2.12''| and assigns the resulting nodes, or in this example rather node as there is just a single one that fulfills this pattern, to the variable \lstinline|p1|. The second and third line match all nodes with the \emph{label} \lstinline|PACKAGE_VERSION| that \lstinline|p1| depends on. Thus, the \lstinline|WHERE| uses a path as a predicate. Thereby, \lstinline|DEPENDS_ON| specifies the \emph{label} of the relationship and the part after the asterisk specifies the minimum and maximum amounts of hops between the nodes. In this case, the minimum is 1 because with the default 0 it would consider itself and as there is no explicit maximum given, it defaults to infinite, to consider all transitive dependencies. The nodes that fulfill these criteria are assigned to \lstinline|p2| and returned, in this case, \emph{java-jdk 1.3.1} and \emph{spring-core 2.1.4}.\par 
+The first line in listing \ref{lst:CypherTransitive} matches the node with the \emph{label} \lstinline|PACKAGE_VERSION| and the key-value-pairs \lstinline|Name: 'spring-context'| and \lstinline|Version: '1.2.12'| and assigns the resulting nodes, or in this example rather node as there is just a single one that fulfills this pattern, to the variable \lstinline|p1|. The second and third line match all nodes with the \emph{label} \lstinline|PACKAGE_VERSION| that \lstinline|p1| depends on. Thus, the \lstinline|WHERE| uses a path as a predicate. Thereby, \lstinline|DEPENDS_ON| specifies the \emph{label} of the relationship and the part after the asterisk specifies the minimum and maximum amounts of hops between the nodes. In this case, the minimum is 1 because with the default 0 it would consider itself and as there is no explicit maximum given, it defaults to infinite, to consider all transitive dependencies. The nodes that fulfill these criteria are assigned to \lstinline|p2| and returned, in this case, \emph{java-jdk 1.3.1} and \emph{spring-core 2.1.4}.\par 
 Assuming there is a composite index on \emph{Name} and \emph{Version}, the initial look up of the node has a time complexity of $O(log(n))$ with $n$ being the number of all nodes with the label \emph{PACKAGE\_VERSION} \cite{neo4j}. The consecutive look ups then have a time complexity of $O(m)$ with $m$ being the number of nodes found during the previous look up. Thus, depending on the number of hops, the general time complexity for such a relationship traversal query may be estimated as 
 $$O(log(n)) + O(m) + ... + O(m)$$
 
 So theoretically, the graph database performs and scales significantly better than the relational database for this kind of queries. Besides, the query is definitely simpler to read and understand than the SQL query involving Common Table Expressions. Although, it is arguably still easier to learn the Common Table Expression than learning an entire new query language.\par 
-Now just for completion, to answer the reciprocal question ''Which Package Versions depend on the spring-context:1.2.12 Package Version?'', the following cypher query would have to be used:
+Now just for completion, to answer the reciprocal question ''Which Package Versions depend on the spring-context:1.2.12 Package Version?'', the following cypher query would have to be used:\\
 
-\begin{lstlisting}[caption=Package Version Reciprocal Dependencies (including transitive), captionpos=b, label=lst:CypherReciprocalTransitive]
-MATCH (p1:PACKAGE_VERSION {Name:''spring-context'',Version:''1.2.12''})
+\begin{lstlisting}[caption=Cypher Query -- Package Version Reciprocal Dependencies (transitive), captionpos=b, label=lst:CypherReciprocalTransitive]
+MATCH (p1:PACKAGE_VERSION {Name:'spring-context',Version:'1.2.12'})
 MATCH (p2:PACKAGE_VERSION)
 WHERE (p1)<-[:DEPENDS_ON*1..]-(p2)
 RETURN (p2)
@@ -553,9 +562,9 @@ In this context, partial schema usually means that the application requires a sp
 Such partial schemas may be enforced by the database through constraints or by the application through frameworks, libraries and standards like \emph{JSON Schema} \cite{JsonSchema} and \emph{OpenAPI}.\\
 
 The \emph{OpenAPI Specification (OAS)} is a technical specification defining a standard, programming language-agnostic interface description for HTTP APIs. The specification is maintained by the \emph{OpenAPI Initiative (OAI)} and is based on the \emph{Swagger Specification}, donated by \emph{SmartBear} who are also among the founding members \cite{OpenAPISpec}.\par
-An OpenAPI document may be represented either in JSON or YAML format. To make this tangible, the below listing \ref{lst:SampleOpenAPI} shows a sample OpenAPI Document describing an exemplary HTTP API by leveraging the core concepts of the specification.
+An OpenAPI document may be represented either in JSON or YAML format. To make this tangible, the below listing \ref{lst:SampleOpenAPI} shows an example OpenAPI Document describing an exemplary HTTP API by leveraging the core concepts of the specification.\\
 
-\begin{lstlisting}[basicstyle=\tiny, caption=Sample OpenAPI Document, captionpos=b, label=lst:SampleOpenAPI]
+\begin{lstlisting}[language=yaml, caption=Example OpenAPI Document, captionpos=b, label=lst:SampleOpenAPI]
 openapi: 3.0.0
   info:
     title: Sample API
@@ -656,9 +665,9 @@ Besides, the real value provided by the application is the queryability of softw
 
 \subsubsection{Meta Data Model} \label{sec:Meta Data Model}
 Providing simple OpenAPI schemas would not be sufficient. A common OpenAPI component schema enables to define objects with a set of properties. Thereby, it may also be specified what data type these properties have and whether they are required \cite{OpenAPISpec}. While such a specification is enough for validation purposes, it lacks the information which properties are part of the entity type's identity.\par 
-To solve this problem, the \emph{Types API} enforces a \emph{Meta Data Model}, which defines schemas for the entity type schemas. Below listing \ref{lst:EntityTypeSchemaSchema} shows the YAML representation of the \emph{Component Type} schema schema.
+To solve this problem, the \emph{Types API} enforces a \emph{Meta Data Model}, which defines schemas for the entity type schemas. Below listing \ref{lst:EntityTypeSchemaSchema} shows the YAML representation of the \emph{Component Type} schema schema.\\
 
-\begin{lstlisting}[basicstyle=\tiny, caption=Entity Type Schema Schema, captionpos=b, label=lst:EntityTypeSchemaSchema]
+\begin{lstlisting}[language=yaml, caption=Entity Type Schema Schema, captionpos=b, label=lst:EntityTypeSchemaSchema]
 ComponentType:
   type: object
   required:
@@ -680,45 +689,45 @@ ComponentType:
       type: object
 \end{lstlisting}
 
-Thus, the entity type schemas have to have a \emph{kind}, \emph{version}, \emph{name} and especially an \emph{identity\_schema} and an \emph{attributes\_schema} property. As the names suggest, the \emph{identity\_schema} and the \emph{attributes\_schema} of type object are themselves again schemas. The \emph{identity\_schema} thereby defines all the properties comprising the identity of the entity type and the \emph{attributes\_schema} specifies all other properties. As this is very abstract and meta level, below listing shows an exemplary JSON representation of a request body to create a \emph{Component Version} schema. 
+Thus, the entity type schemas have to have a \emph{kind}, \emph{version}, \emph{name} and especially an \emph{identity\_schema} and an \emph{attributes\_schema} property. As the names suggest, the \emph{identity\_schema} and the \emph{attributes\_schema} of type object are themselves again schemas. The \emph{identity\_schema} thereby defines all the properties comprising the identity of the entity type and the \emph{attributes\_schema} specifies all other properties. As this is very abstract and meta level, below listing shows an exemplary JSON representation of a request body to create a \emph{Component Version} schema.\\ 
 
-\begin{lstlisting}[basicstyle=\tiny, caption=Request Body for Component Version Schema Creation, captionpos=b, label=lst:ComponentVersionSchemaCreation]
+\begin{lstlisting}[language=json, caption=Request Body for Component Version Schema Creation, captionpos=b, label=lst:ComponentVersionSchemaCreation]
 {
-  ''kind'': ''ComponentType'',
-  ''version'': ''v1alpha1'',
-  ''name'': ''Component'',
-  ''identity_schema'': {
-    ''type'': ''object'',
-    ''required'': [
-      ''name'',
-      ''version''
+  'kind': 'ComponentType',
+  'version': 'v1alpha1',
+  'name': 'Component',
+  'identity_schema': {
+    'type': 'object',
+    'required': [
+      'name',
+      'version'
     ],
-    ''properties'': {
-      ''name'': {
-        ''type'': ''string'',
-        ''maxLength'': 255
+    'properties': {
+      'name': {
+        'type': 'string',
+        'maxLength': 255
       },
-      ''version'': {
-        ''type'': ''string''
+      'version': {
+        'type': 'string'
       }
     }
   },
-  ''attributes_schema'': {
-    ''type'': ''object'',
-    ''properties'': {
-      ''labels'': {
-        ''type'': ''array'',
-        ''items'': {
-          ''type'': ''object'',
-          ''required'': [
-            ''name'',
-            ''value''
+  'attributes_schema': {
+    'type': 'object',
+    'properties': {
+      'labels': {
+        'type': 'array',
+        'items': {
+          'type': 'object',
+          'required': [
+            'name',
+            'value'
           ],
-          ''properties'': {
-            ''name'': {
-              ''type'': ''string'',
+          'properties': {
+            'name': {
+              'type': 'string',
             },
-            ''value'': {}
+            'value': {}
           }
         }  
       }
@@ -737,55 +746,55 @@ Based on the data model defined in the section \ref{sec:Data Model}, the combina
 Currently, these schemas cannot be provided for the abstract entity types, thus, \emph{Component}, \emph{Resource}, \emph{Source}, \emph{Package}, \emph{Package Version}, but only for their respective concrete entity types \emph{Component Version}, thus, \emph{Resource Version}, \emph{Source Version}, \emph{Native Package Version} and \emph{Info Snippets}.\par 
 This is because these are the types of entities that are provided by the component model and data sources, thus, the types of entities that are actually ingested. Their abstract entities are rather groupings of those entities, thus, aggregations. As discussed in the data model section, these entities therefore mostly store information that has to be manually created by the user such as \emph{triage policies} or information that is merged from the concrete entities such as the common properties of \emph{Native Package Versions} in \emph{Package Versions}. Furthermore, especially the identities of the abstract entities depend on the respective concrete entity's identity.\par
 For example, the identity of a \emph{Component} is equal to the identity of a \emph{Component Version} without considering the version property. Similarly for all other entities with a corresponding relationship. Therefore, although this unfortunately is not and cannot be represented in the OpenAPI schema of the entity types schema, the application enforces all the entity type's \emph{identity\_schemas} except the ones' of \emph{Info Snippets} to provide a \emph{version} property. While consuming and storing entities through the \emph{Ingestion API}, the higher aggregation level entities are then created implicitly with the respective identity.\par
-The \emph{Ingestion API Schema Assembly Service} which builds the whole \emph{Ingestion API schema} retrieves the created schemas of the concrete  entity types and assembles \emph{identity\_schema} and \emph{attributes\_schema} to a single component schema for the entity type as shown in the listing below.
+The \emph{Ingestion API Schema Assembly Service} which builds the whole \emph{Ingestion API schema} retrieves the created schemas of the concrete  entity types and assembles \emph{identity\_schema} and \emph{attributes\_schema} to a single component schema for the entity type as shown in the listing below.\\
 
-\begin{lstlisting}[basicstyle=\tiny, caption=Component Version Schema, captionpos=b, label=lst:ComponentVersionSchema]
-''Component.v1alpha1'': {
-  ''type'': ''object'',
-  ''properties'': {
-    ''metadata'': {
-      ''type'': ''object'',
-      ''required'': [''kind'', ''type'', ''version''],
-      ''properties'': {
-      	''kind'': {
-      	  ''type'': ''string'',
-      	  ''pattern'': ''^ComponentType$''
+\begin{lstlisting}[language=json, caption=Component Version Schema, captionpos=b, label=lst:ComponentVersionSchema]
+'Component.v1alpha1': {
+  'type': 'object',
+  'properties': {
+    'metadata': {
+      'type': 'object',
+      'required': ['kind', 'type', 'version'],
+      'properties': {
+      	'kind': {
+      	  'type': 'string',
+      	  'pattern': '^ComponentType$'
       	},
-        ''type'': {
-          ''type'': ''string'',
-          ''pattern'': ''^Component$''
+        'type': {
+          'type': 'string',
+          'pattern': '^Component$'
         },
-        ''version'': {
-          ''type'': ''string''
+        'version': {
+          'type': 'string'
         }
       }
     },
-    ''identity'': {
-      ''type'': ''object'',
-      ''required'': [''name'',''version''],
-      ''properties'': {
-        ''name'': {
-          ''type'': ''string'',
-          ''maxLength'': 255
+    'identity': {
+      'type': 'object',
+      'required': ['name','version'],
+      'properties': {
+        'name': {
+          'type': 'string',
+          'maxLength': 255
         },
-        ''version'': {
-          ''type'': ''string''
+        'version': {
+          'type': 'string'
         }
       }
     },
-    ''attributes'': {
-      ''type'': ''object'',
-      ''properties'': {
-        ''labels'': {
-          ''type'': ''array'',
-          ''items'': {
-            ''type'': ''object'',
-            ''required'': [''name'', ''value''],
-            ''properties'': {
-              ''name'': {
-                ''type'': ''string'',
+    'attributes': {
+      'type': 'object',
+      'properties': {
+        'labels': {
+          'type': 'array',
+          'items': {
+            'type': 'object',
+            'required': ['name', 'value'],
+            'properties': {
+              'name': {
+                'type': 'string',
                },
-              ''value'': {}
+              'value': {}
             }
           }  
         } 
@@ -803,9 +812,9 @@ Imagine each \emph{Component Version} schema also includes references to all rel
 Apart from that, all \emph{Relationship} schemas only have two further properties, the \emph{labels} property, which allows arbitrarily nested objects and a \emph{name} property of type string. As mentioned before, Neo4j can store JSON documents. But as each node and relationship only stores key-value pairs, nested properties are stored as string and cannot be leveraged in queries (except for using string comparisons, which is quite inefficient).
 
 \subsubsection{Endpoints}
-The \emph{Types API} exposes the following HTTP endpoints:
+The \emph{Types API} exposes the following HTTP endpoints:\\
 
-\begin{lstlisting}[basicstyle=\tiny, caption=Types API Endpoints, captionpos=b, label=lst:TypesEndpoints]
+\begin{lstlisting}[caption=Types API Endpoints, captionpos=b, label=lst:TypesEndpoints]
 /types/component
 
 /types/resource
@@ -833,7 +842,7 @@ Imagine a request contains multiple entities. One of them is faulty. Now, the ge
 Therefore, in order to get helpful error messages, the validation would have to be implemented at a later point, evaluating the \emph{kind} property and calling the validation function individually for each entity in the request with the corresponding schema. But this is more of an implementation detail.
 
 \subsection{Ingestion API \& Services}
-The \emph{Ingestion API} is fairly simple, once the \emph{Types API \& Services} are understood. It exposes a single HTTP endpoint:
+The \emph{Ingestion API} is fairly simple, once the \emph{Types API \& Services} are understood. It exposes a single HTTP endpoint:\\
 
 \begin{lstlisting}[caption=Ingestion API Endpoint, captionpos=b, label=lst:IngestionEndpoint]
 /datalake
@@ -852,9 +861,9 @@ A brief summary of the API development process may help in understanding the des
 REST APIs are currently probably the most popular types of APIs. This is due to their simplicity and intuitiveness leveraging the built in semantics of the web, the HTTP verbs, and mapping the main entity types of an application to resources and exposing them through individual endpoints.\par
 Therefore, the initial idea was to design a single REST API for \emph{querying} as well as \emph{consuming} the data. Thus, at that point a separation of \emph{Ingestion API} and \emph{Query API} was not planned yet.\par 
 There were several different approaches for endpoint design. There was the common mapping of entity types and relationships to resources and corresponding endpoints. And there were several different deviations of the common REST approach, trying to deal with the same \emph{three main problems} the classic REST API is facing in this use case.\par 
-The below listings outlines the endpoints of a common mapping of the entity types and relationships to resources for the example of the component entity types:
+The below listings outlines the endpoints of a common mapping of the entity types and relationships to resources for the example of the component entity types:\\
 
-\begin{lstlisting}[basicstyle=\tiny, caption=REST API Endpoints, captionpos=b, label=lst:RESTAPIEndpoints]
+\begin{lstlisting}[caption=REST API Endpoints, captionpos=b, label=lst:RESTAPIEndpoints]
 /components
 /components/{component_name}
 /components/{component_name}/versions
@@ -867,9 +876,9 @@ The below listings outlines the endpoints of a common mapping of the entity type
 There is a problem arising from such common REST API design regarding the \emph{data ingestion}. Theoretically, to create \emph{Component Versions}, the adapter would have to send a \emph{huge number of separate requests} and route them to the correct endpoints. Thus, to merge a version v0.15.0 of the component named \emph{github.com/gardener/etcd-druid}, a PUT request would have to be sent to \lstinline|/components/github.com/gardener/| \lstinline|etcd-druid/|. To merge the relationships, further PUT requests would have to be sent to the respective endpoints. This would result in a lot of separate requests. The relationships could not be created before the \emph{Component Version} exists. Thus, even the sequence of the requests is important. Therefore, this approach is impractical.\par
 But, considering that the data sources only provide the lowest aggregation level entities, thus, \emph{Component Versions}, and the respective higher aggregation level entities, thus, \emph{Components}, usually are created implicitly anyway, a deviation from the REST standard for data ingestion was deemed acceptable. Therefore, to solve this problem, all \emph{Component Version} entities could just be sent to the \lstinline|/components| endpoint with the references as nested objects.\\
 
-There is another problem concerning the \emph{queryability} of this REST API. Designing endpoints like this does enable to retrieve all information about the individual entities, but it does not provide a possibility to traverse the relationships with a single request. As the relationship itself is not really interesting for most queries, this problem could be solved by adding following endpoints:
+There is another problem concerning the \emph{queryability} of this REST API. Designing endpoints like this does enable to retrieve all information about the individual entities, but it does not provide a possibility to traverse the relationships with a single request. As the relationship itself is not really interesting for most queries, this problem could be solved by adding following endpoints:\\
 
-\begin{lstlisting}[basicstyle=\tiny, caption=REST API Query Endpoints, captionpos=b, label=lst:RESTAPIQueryEndpoints]
+\begin{lstlisting}[caption=REST API Query Endpoints, captionpos=b, label=lst:RESTAPIQueryEndpoints]
 /components/{component_name}/versions/{version}/component_versions
 /components/{component_name}/versions/{version}/source_versions
 /components/{component_name}/versions/{version}/resource_versions
@@ -891,15 +900,15 @@ So, the REST API would also enable to traverse the graph and intuitively answer 
 This deviation of a REST API seemed simple and intuitive and still powerful. But there is a third problem, \emph{parsing}. In the end, this also led to the final reason for not pursuing this approach further.\par
 Part of the problem is already visible in the data ingestion example. Common routing frameworks and libraries are not able to handle URLs such as \lstinline|/components/| \lstinline|github.com/gardener/etcd-druid/| since the slashes in the name would be interpreted as a path separator.\par 
 Intuitively, this could be solved by replacing the slash by a different character such as an underscore. But for this to work properly, the respective character cannot be allowed to be used in the name. This would definitely cause compatibility issues with OCM and other component models.\par 
-Another approach is to implement a custom parser. But in order for this to work, the URLs have to be adjusted to always end on a keyword. For example, the previous URL to retrieve a component with a specific name would have to be changed to something like \lstinline|/components/github.com/| \lstinline|gardener/etcd-druid/list| with \emph{list} being the keyword. Then a custom parser could parse the URL backwards.\par
-But even with URLs always ending on keywords, the parsing may not be unambiguous, as shown by the listing below.
+Another approach is to implement a custom parser. But in order for this to work, the URLs have to be adjusted to always end on a keyword. For example, the previous URL to retrieve a component with a specific name would have to be changed to something like \lstinline|/components/github.com/gardener/etcd-druid/list| with \emph{list} being the keyword. Then a custom parser could parse the URL backwards.\par
+But even with URLs always ending on keywords, the parsing may not be unambiguous, as shown by the listing below.\\
 
 \begin{lstlisting}[caption=Ambiguous REST API URL, captionpos=b, label=lst:Ambiguous URL]
 /components/github.com/gardener/etcd-druid/versions/1.2.3/list
 \end{lstlisting}
 
 This request could be meant to list all \emph{Component Versions} with \emph{component\_name = github.com/gardener/etcd-druid}. But it could also be meant to list all \emph{Components} with \emph{component\_name = github.com/gardener/etcd-druid/versions/1.2.3}.\par
-The problems become even more difficult to deal with when considering corresponding endpoints for \emph{Sources} and \emph{Resources}. Using the identity properties of the OCM, respective endpoints would look like this:
+The problems become even more difficult to deal with when considering corresponding endpoints for \emph{Sources} and \emph{Resources}. Using the identity properties of the OCM, respective endpoints would look like this:\\
 
 \begin{lstlisting}[caption=REST API Source Endpoint, captionpos=b, label=lst:RESTAPISourceEndpoint]
 /sources/{component_name:component_version:source_name:extra_id}
@@ -908,7 +917,7 @@ The problems become even more difficult to deal with when considering correspond
 While this is not really clean, it still seems as this may work as long as the character separating the individual properties of the sources' identity, in this example the colon, is guaranteed to not occur within one of the properties. But as previously established, such a separator would lead to compatibility issues. Besides, per OCM specification, the \emph{extra\_id} is a flat map containing an arbitrary number of key-value pairs. Thus, the key-value pairs would have to be included in the URL.\par
 Therefore, it is apparent that there is no clean solution to identifying entities by integrating their dynamically configurable identities into the URL.\\
 
-To solve this parsing issues, assigning additional \emph{surrogate keys}, thus \emph{UUIDs} or \emph{auto incremented IDs}, as it is done in common REST API use cases was considered. But this would require additional requests to find the surrogate key of the respective entity. Thus, the API would have to support requests using query parameters as indicated by the listing below.
+To solve this parsing issues, assigning additional \emph{surrogate keys}, thus \emph{UUIDs} or \emph{auto incremented IDs}, as it is done in common REST API use cases was considered. But this would require additional requests to find the surrogate key of the respective entity. Thus, the API would have to support requests using query parameters as indicated by the listing below.\\
 
 \begin{lstlisting}[caption=Querying for Entitiy ID, captionpos=b, label=lst:QueryingForEntityID]
 /sources?component_name=github.com/gardener/etcd-druid&version=0.15.0&source_name=etcd&extra_identifier=etcd-druid-source
@@ -924,14 +933,16 @@ Finally, hashing the identity properties and using the hash as ID was considered
 \subsubsection{Remote Procedure Calls}
 As the REST API approach was deemed unsuitable after thorough analysis, the next best idea was to implement the most common queries as \emph{Remote Procedure Calls (RPC)}.\par 
 This approach is simple and clean. The application specifies a set of functions, or rather procedures, that may be called through the API. Furthermore, it defines which properties have to be provided for each procedure and the format in which these properties have to be provided. In the context of web services, those procedures are typically called by HTTP POST requests, specifying the procedure to be called as well as the corresponding properties in the corresponding format in the request body. Thus, there would be no issues regarding embedding properties in the URL and parsing.\par
-While implementing the most common queries is convenient, it is also quite inflexible. An intuitive, more flexible approach which gives users the full capability to run precise and complex queries through the API and to answer questions such as ''Which Package Versions depend on the spring-context:1.2.12 Package Version?'' is indicated by the listing below.
+While implementing the most common queries is convenient, it is also quite inflexible. An intuitive, more flexible approach which gives users the full capability to run precise and complex queries through the API and to answer questions such as ''Which Package Versions depend on the spring-context:1.2.12 Package Version?'' is indicated by the listing below.\\
 
 \begin{lstlisting}[caption=Exposing Cypher through API, captionpos=b, label=lst:CypherThroughAPI]
-POST /processCypher(
- ''MATCH (p1:PACKAGE_VERSION {Name:''spring-context'',Version:''1.2.12''})
+POST /query
+
+processCypher(
+ 'MATCH (p1:PACKAGE_VERSION {Name:'spring-context',Version:'1.2.12'})
   MATCH (p2:PACKAGE_VERSION)
   WHERE (p1)<-[:DEPENDS_ON*1..]-(p2)
-  RETURN (p2)''
+  RETURN (p2)'
 )
 \end{lstlisting}
 
@@ -941,9 +952,9 @@ Thus, these RPC approaches were not satisfying either.
 
 \subsubsection{GraphQL}
 On a basic level, a \emph{GraphQL API} is also essentially RPC, as \emph{GraphQL} is also a query language for APIs \cite{GraphQL} designed by Meta. Thereby, a GraphQL API exposes a single endpoint which is typically called \lstinline|/graphql|.\par
-But GraphQL has a special approach to specifying APIs and defining queries, which makes it very intuitive and easy to use. A GraphQL API is defined by \emph{types} which correspond to resources in a REST API, and \emph{fields} on this \emph{types}. To specify those \emph{types} and \emph{fields}, GraphQL provides its own \emph{GraphQL schema language}. Listing \ref{lst:GraphQLComponentVersion} shows an exemplary GraphQL schema language representation of a \emph{Component Version} based on the OCM data model instance in section \ref{sec:Application of the Data Model} ''Application of the Data Model''.
+But GraphQL has a special approach to specifying APIs and defining queries, which makes it very intuitive and easy to use. A GraphQL API is defined by \emph{types} which correspond to resources in a REST API, and \emph{fields} on this \emph{types}. To specify those \emph{types} and \emph{fields}, GraphQL provides its own \emph{GraphQL schema language}. Listing \ref{lst:GraphQLComponentVersion} shows an exemplary GraphQL schema language representation of a \emph{Component Version} based on the OCM data model instance in section \ref{sec:Application of the Data Model} ''Application of the Data Model''.\\
 
-\begin{lstlisting}[basicstyle=\tiny, caption=GraphQL Component Version Schema, captionpos=b, label=lst:GraphQLComponentVersion]
+\begin{lstlisting}[caption=GraphQL Component Version Schema, captionpos=b, label=lst:GraphQLComponentVersion]
 type Query {
   Component(Identity: ComponentIdentityArgs): [Component]
   ComponentVersion(Identity: ComponentVersionIdentityArgs, Attributes: ComponentVersionAttributesArgs): [ComponentVersion]
@@ -986,11 +997,11 @@ input ComponentVersionAttributesArgs {
 
 The GraphQL schema language is quite intuitive. The \emph{Query} \emph{type} is a special type which defines the entry point for GraphQL queries, listing all \emph{types} a user may query for. These available \emph{types} further specify their fields and therefore declare what may be queried on them, and so on. Thereby, the GraphQL schema resembles a REST API which properly implements hypermedia as the engine of application state. But instead of having to send multiple queries to navigate through the API step by step and actually retrieve data, with GraphQL the entire schema may be retrieved at once. This reduces the overhead in requests and data transfer significantly.\par
 The \emph{Component Version} \emph{object type} is a field within the \emph{Query} \emph{type} and has two \emph{ input objects} as arguments, the \emph{ComponentVersionIdentityArgs} object and the \emph{ComponentVersionAttributesArgs} object, defined at the bottom of the listing. \emph{[ComponentVersion]} thereby represents an array of \emph{Component Version} objects.\par 
-The basic structure of the previously described REST API and of the GraphQL API defined by this schema is quite similar. Both hide the relationship traversals necessary to answer questions such as ''Which Vulnerabilities are contained in Component Version ''github.com/gardener/etcd-druid:0.15.0''?''. Instead, for the user of the API, it looks and feels like \emph{Component Versions} are stored like documents in a document database with all related entities directly nested inside of them. Thus, a GraphQL query to answer the respective question based on the above GraphQL schema looks like this:
+The basic structure of the previously described REST API and of the GraphQL API defined by this schema is quite similar. Both hide the relationship traversals necessary to answer questions such as ''Which Vulnerabilities are contained in Component Version ''github.com/gardener/etcd-druid:0.15.0''?''. Instead, for the user of the API, it looks and feels like \emph{Component Versions} are stored like documents in a document database with all related entities directly nested inside of them. Thus, a GraphQL query to answer the respective question based on the above GraphQL schema looks like this:\\
 
-\begin{lstlisting}[basicstyle=\tiny,  caption=GraphQL Query, captionpos=b, label=lst:GraphQLQuery]
+\begin{lstlisting}[caption=GraphQL Query, captionpos=b, label=lst:GraphQLQuery]
 {
-  ComponentVersion(Identity: {name:''github.com/gardener/etcd-druid'', version: ''0.15.0''}) {
+  ComponentVersion(Identity: {name:'github.com/gardener/etcd-druid', version: '0.15.0'}) {
     ContainedVulnerabilities {
       Identity {
         cve
@@ -1006,11 +1017,11 @@ The basic structure of the previously described REST API and of the GraphQL API 
 
 In reality, the application assigns functions to the respective fields on a GraphQL schema. These functions generate a corresponding \emph{cypher} query to retrieve the data from the database and resolve the request.\par
 As shown in listing \ref{lst:GraphQLQuery}, the query language even allows to specify which properties of the \emph{Vulnerabilities} shall be retrieved. While this is not really significant for this application, compared to a REST API this may reduce the overhead even further by exactly describing what shall be queried and retrieved.\par 
-More importantly, the GraphQL query language gets rid of parsing issues as the data model and queries do not have to be mapped to URL paths. Additionally, it is also more powerful than the REST API, as it supports arbitrary nesting of the queried objects. Thus, considering above query, it is possible to specify to retrieve all packages the respective \emph{Vulnerability} occurs in. Depending on the exact GraphQL schema of the \emph{PackageVersion} \emph{type} the respective query would look something like this:
+More importantly, the GraphQL query language gets rid of parsing issues as the data model and queries do not have to be mapped to URL paths. Additionally, it is also more powerful than the REST API, as it supports arbitrary nesting of the queried objects. Thus, considering above query, it is possible to specify to retrieve all packages the respective \emph{Vulnerability} occurs in. Depending on the exact GraphQL schema of the \emph{PackageVersion} \emph{type} the respective query would look something like this:\\\\
 
-\begin{lstlisting}[basicstyle=\tiny, caption=Nested GraphQL Query, captionpos=b, label=lst:NestedGraphQLQuery]
+\begin{lstlisting}[caption=Nested GraphQL Query, captionpos=b, label=lst:NestedGraphQLQuery]
 {
-  ComponentVersion(Identity: {name:''github.com/gardener/etcd-druid'', version: ''0.15.0''}) {
+  ComponentVersion(Identity: {name:'github.com/gardener/etcd-druid', version: '0.15.0'}) {
     ContainedVulnerabilities {
       Identity {
         cve

@@ -32,12 +32,13 @@
 \usepackage{tocloft}
 
 % Literaturverzeichnis
-\usepackage[sorting=none, backend=tex, style=numeric, urldate=iso, date=iso]{biblatex}
+\usepackage[sorting=none, backend=bibtex, style=numeric]{biblatex}
 \usepackage{xurl}
 
 % Quellcode einbinden
 \usepackage{ifthen}	  % IF-THEN Befehle
 \usepackage{listings} % Quellcode anzeigen
+
 \usepackage{textcomp} % Straight Single quotes in listings
 
 % Mathematik
@@ -62,7 +63,6 @@
 \usepackage{fancyhdr} 	  % Kopf- und Fußzeile manipulieren
 \usepackage{caption}      % Bildunterschrift
 \usepackage{csquotes}     % Quotes
-\usepackage[bottom]{footmisc}
 \usepackage{xpatch}
 \usepackage{xcolor}
 \usepackage{realboxes}
@@ -221,6 +221,52 @@ urlcolor=blue]   % URL-Links        in blau
 	keywordstyle=[2]{\color{DCLred}}
 }
 
+%yaml
+\newcommand\YAMLcolonstyle{\color{red}\mdseries}
+\newcommand\YAMLkeystyle{\color{black}\mdseries}
+\newcommand\YAMLvaluestyle{\color{blue}\mdseries}
+
+\makeatletter
+
+% here is a macro expanding to the name of the language
+% (handy if you decide to change it further down the road)
+\newcommand\language@yaml{yaml}
+
+\expandafter\expandafter\expandafter\lstdefinelanguage
+\expandafter{\language@yaml}
+{
+  keywords={true,false,null,y,n},
+  keywordstyle=\color{darkgray}\bfseries,
+  basicstyle=\YAMLkeystyle\footnotesize,                                 % assuming a key comes first
+  sensitive=false,
+  comment=[l]{\#},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\YAMLvaluestyle\ttfamily,
+  moredelim=[l][\color{orange}]{\&},
+  moredelim=[l][\color{magenta}]{*},
+  moredelim=**[il][\YAMLcolonstyle{:}\YAMLvaluestyle]{:},   % switch to value style at :
+  morestring=[b]',
+  morestring=[b]",
+  literate =    {---}{{\ProcessThreeDashes}}3
+                {>}{{\textcolor{red}\textgreater}}1     
+                {|}{{\textcolor{red}\textbar}}1 
+                {\ -\ }{{\mdseries\ -\ }}3,
+}
+
+% switch to key style at EOL
+\lst@AddToHook{EveryLine}{\ifx\lst@language\language@yaml\YAMLkeystyle\fi}
+\makeatother
+
+\newcommand\ProcessThreeDashes{\llap{\color{cyan}\mdseries-{-}-}}
+
+\lstset{
+numbers=left,
+stepnumber=1,
+frame=single,
+xleftmargin=4.5ex,
+basicstyle=\footnotesize\ttfamily
+}
 
 \makeatletter
 \xpretocmd\lstinline{\Colorbox{codeGray}\bgroup\appto\lst@DeInit{\egroup}}{}{}

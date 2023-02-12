@@ -8,7 +8,7 @@ The OCM is a SBOM format created and used by SAP Gardener. It does not fulfill t
 So, SPDX effectively describes \emph{arbitrary metadata} (e.g. licenses and file type) about logical units of software. SPDX refers to this logical units of software as \emph{Packages}. As described in section \ref{sec:SBOM} ''Software Bill of Materials'', a \emph{Package} may be anything, ranging from a snippet of code over single file over an artifact to an entire software product version. Thus, SBOMs are \emph{containers for arbitrary software metadata}.\par
 Opposed to that, the OCM describes the \emph{delivery relevant information about and the access to artifacts} composing a logical unit of software. OCM refers to this logical units of software as \emph{Components}, or rather \emph{Component Versions}. Thus, \emph{Component Versions} are  \emph{containers for a structured set of delivery relevant artifacts}.\par 
 For this reason, SAP Gardener stopped referring to OCM as an SBOM format and instead invented the term \emph{Software Bill of Delivery (SBOD)}.\par
-Following is a technical explanation of the OCM deducted from the specification \cite{OCMSpec}, an internal presentation \cite{OCMInternalPresentation} and interviews with responsible developers. Even though this explanation focuses on understanding the rationale behind the design decisions of the proposed standard rather than technical completeness, it may still be hard to grasp. This is due to the abstract nature of the OCM. Therefore, emphasis and examples are used where possible. Also, while the textual description explains the OCM as the abstract model that it is, figure \ref{fig:ComponentDescriptor} below shows a \emph{Component Descriptor}, the serialization format of a \emph{Component Version}. This may also support in understanding the abstract concepts.
+Following is a technical explanation of the OCM deducted from the specification \cite{OCMSpec}, an internal presentation \cite{OCMInternalPresentation} and interviews with responsible developers. Even though this explanation focuses on understanding the rationale behind the design decisions of the proposed standard rather than technical completeness, it may still be hard to grasp. This is due to the abstract nature of the OCM. Therefore, emphasis and examples are used where possible. Also, while the textual description explains the OCM as the abstract model that it is, listing \ref{lst:ComponentDescriptor} below shows a \emph{Component Descriptor}, the serialization format of a \emph{Component Version}. This may also support in understanding the abstract concepts.
 
 \subsection{Model Elements}
 
@@ -32,86 +32,76 @@ The \lstinline|version| \emph{(string)} (l. 16, l. 25, l. 43) is \emph{optional}
 The \lstinline|extraIdentity| \emph{(map[string]string)}(l. 17, l. 32, ll. 45-46) is \emph{optional} and allows adding arbitrary identity attributes.\par
 As this is a \emph{Component-Version-Local Identity}, \emph{Artifacts} and \emph{Component References} may be identified by the triple \emph{({Component Name}, {Component Version}, {Local Identity})}.\\
 
-\textbf{Labels:} The \emph{Labels} attribute set is represented by a single \lstinline|labels| \emph{([]any)} attribute. With this, \emph{Labels} allows to attach additional arbitrarily nested metadata to such an element, which is not directly described by the existing model elements. This enables the use of application specific attributes without the need to extend the model for new arising use cases \cite{OCMSpec}. When a \emph{Component Version} is used by a tool to retrieve the artifacts of the respective product version and put them into a scanning tool, a tag within the labels attribute could be used to mark exceptions, e.g. an artifact within that product version that does never have to be scanned.
-\begin{figure}[H]
-\begin{minted}[
-frame=single,
-fontsize=\tiny,
-linenos,
-numbersep=-10pt,
-obeytabs=true
-]{YAML}
-    component:
-      name: github.com/gardener/etcd-druid
-      version: v0.15.3
-      repositoryContexts:
-        - type: ociRegistry
-          baseUrl: eu.gcr.io/sap-se-gcr-k8s-private/cnudie/gardener/development
-          subPath: null
-      provider: internal
-      sources:
-        - name: github_com_gardener_etcd-druid
-          access:
-            type: github
-            repoUrl: github.com/gardener/etcd-druid
-            ref: refs/tags/v0.15.3
-            commit: a6112534eb79021fa191edb8efd6512760ae050f
-          version: v0.15.3
-          extraIdentity: {}
-          type: git
-          labels:
-            - name: cloud.gardener/cicd/source
-              value:
-                repository-classification: main
-      resources:
-        - name: etcd-druid
-          version: v0.15.3
-          type: ociImage
-          access:
-            type: ociRegistry
-            imageReference: >-
-              eu.gcr.io/sap-se-gcr-k8s-public/eu_gcr_io/gardener-project/gardener/etcd-druid:v0.15.3-mod1
-          digest: null
-          extraIdentity: {}
-          relation: local
-          labels:
-            - name: cloud.gardener.cnudie/migration/original_ref
-              value: eu.gcr.io/gardener-project/gardener/etcd-druid:v0.15.3
-            - name: cloud.gardener.cnudie/sdo/lssd
-              value:
-                processingRules:
-                  - purge_berkeleydb_to_public
-          srcRefs: []
-      componentReferences:
+\textbf{Labels:} The \emph{Labels} attribute set is represented by a single \lstinline|labels| \emph{([]any)} attribute. With this, \emph{Labels} allows to attach additional arbitrarily nested metadata to such an element, which is not directly described by the existing model elements. This enables the use of application specific attributes without the need to extend the model for new arising use cases \cite{OCMSpec}. When a \emph{Component Version} is used by a tool to retrieve the artifacts of the respective product version and put them into a scanning tool, a tag within the labels attribute could be used to mark exceptions, e.g. an artifact within that product version that does never have to be scanned.\\\\
+
+\begin{lstlisting}[language=yaml, caption=Component Descriptor, captionpos=b, label=lst:ComponentDescriptor]
+component:
+  name: github.com/gardener/etcd-druid
+  version: v0.15.3
+  repositoryContexts:
+  - type: ociRegistry
+    baseUrl: eu.gcr.io/sap-se-gcr-k8s-private/cnudie/gardener/development
+    subPath: null
+  provider: internal
+  sources:
+  - name: github_com_gardener_etcd-druid
+    access:
+      type: github
+      repoUrl: github.com/gardener/etcd-druid
+      ref: refs/tags/v0.15.3
+      commit: a6112534eb79021fa191edb8efd6512760ae050f
+    version: v0.15.3
+    extraIdentity: {}
+    type: git
+    labels:
+    - name: cloud.gardener/cicd/source
+      value:
+        repository-classification: main
+  resources:
+  - name: etcd-druid
+    version: v0.15.3
+    type: ociImage
+    access:
+      type: ociRegistry
+      imageReference: >-
+        eu.gcr.io/sap-se-gcr-k8s-public/eu_gcr_io/gardener-project/gardener/etcd-druid:v0.15.3-mod1
+    digest: null
+    extraIdentity: {}
+    relation: local
+    labels:
+    - name: cloud.gardener.cnudie/migration/original_ref
+      value: eu.gcr.io/gardener-project/gardener/etcd-druid:v0.15.3
+    - name: cloud.gardener.cnudie/sdo/lssd
+      value:
+        processingRules:
+          - purge_berkeleydb_to_public
+    srcRefs: []
+  componentReferences:
+  - name: etcd
+    componentName: github.com/gardener/etcd-custom-image
+    version: v3.4.13-bootstrap-8
+    digest: null
+    extraIdentity:
+      imagevector-gardener-cloud+tag: v3.4.13-bootstrap-8
+    labels:
+    - name: imagevector.gardener.cloud/images
+      value:
+        images:
         - name: etcd
-          componentName: github.com/gardener/etcd-custom-image
-          version: v3.4.13-bootstrap-8
-          digest: null
-          extraIdentity:
-            imagevector-gardener-cloud+tag: v3.4.13-bootstrap-8
-          labels:
-            - name: imagevector.gardener.cloud/images
-              value:
-                images:
-                  - name: etcd
-                    repository: eu.gcr.io/gardener-project/gardener/etcd
-                    resourceId:
-                      name: etcd
-                    sourceRepository: github.com/gardener/etcd-custom-image
-                    tag: v3.4.13-bootstrap-8
-      labels: []
-    signatures: []
-\end{minted}
-	\centering
-	\caption[Component Descriptor]{Component Descriptor \source{Based on \cite{OCMSpec}}}
-	\label{fig:ComponentDescriptor}
-\end{figure}
+          repository: eu.gcr.io/gardener-project/gardener/etcd
+          resourceId:
+            name: etcd
+          sourceRepository: github.com/gardener/etcd-custom-image
+          tag: v3.4.13-bootstrap-8
+  labels: []
+signatures: []
+\end{lstlisting}
 
 \noindent\textbf{Artifacts}\\
 Generally, an \emph{Artifact} is a blob containing some data in some technical format \cite{OCMSpec}. Besides \emph{Identity} and \emph{Labels}, \emph{Artifacts} do have the following further attributes \cite{OCMSpec}:
 \begin{itemize}
 \item A dedicated globally unique \lstinline|type| (l. 18, l. 26) representing the kind of content and how it can be used.
-\item A formal description of the \lstinline|access| (ll. 11-15, ll. 27-30). This description can be used to technically access the content of the artifact in form of a blob with a format defined by the \lstinline|type| of the artifact (l. 18, l. 26) (the \lstinline|type| shown within the access in figure \ref{fig:ComponentDescriptor} specifies the access method and thereby determines the formal procedure how to access the content and the fields of the access specification required to follow this procedure).
+\item A formal description of the \lstinline|access| (ll. 11-15, ll. 27-30). This description can be used to technically access the content of the artifact in form of a blob with a format defined by the \lstinline|type| of the artifact (l. 18, l. 26) (the \lstinline|type| shown within the access in listing \ref{lst:ComponentDescriptor} specifies the access method and thereby determines the formal procedure how to access the content and the fields of the access specification required to follow this procedure).
 \end{itemize}
 The OCM distinguishes two kinds of \emph{Artifacts}, \emph{Sources} and \emph{Resources}.\par
 \emph{Sources} (ll. 9-22) describe artifacts that are sources for the delivery relevant artifacts (e.g. source code).\par
@@ -123,7 +113,7 @@ Important to stress here is, that \emph{Component References} do not only specif
 But since the referenced \emph{Component Version} still has to be specified, the \emph{Component Reference} has an additional attribute, \lstinline|componentName| (l. 44), which, together with \lstinline|version| (l. 45), uniquely identifies the \emph{Component Version} \cite{OCMSpec}.\\
 
 \noindent\textbf{Additional Information}\\
-There are some attributes in figure \ref{fig:ComponentDescriptor} that are less important, but shall still be mentioned for completeness of the description \cite{OCMSpec}:
+There are some attributes in listing \ref{lst:ComponentDescriptor} that are less important, but shall still be mentioned for completeness of the description \cite{OCMSpec}:
 \begin{itemize}
 \item A \emph{Repository Context} (ll. 4-7) describes the access to an \emph{OCM Repository}. An \emph{OCM Repository} thereby is a repository providing technical access to the \emph{Component Version}, or rather the \emph{Component Descriptor}. 
 \item The \emph{Provider} (l. 8) specifies the company or organization providing the \emph{Component Version}.
